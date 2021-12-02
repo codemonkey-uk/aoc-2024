@@ -39,24 +39,38 @@ void Two_A()
 
 void Two_B()
 {
-    /*
-    int a=0;
-    std::vector<int> data;
-    data.reserve( 2048 );
+    string line;
 
-    while(cin>>a)
-    {
-        data.push_back(a);
-    }
+    //Your horizontal position and depth both start at 0.
+    int horizontal_position=0;
+    int depth=0;
+    int aim=0;
 
-    int c = 0;
-    for (size_t i = 3;i<data.size();++i)
+    const int fl = strlen("forward");
+    const int dl = strlen("down");
+    const int ul = strlen("ul");
+
+    while(getline(cin,line))
     {
-        int ps = data[i-1] + data[i-2] + data[i-3];        
-        int is = data[i-0] + data[i-1] + data[i-2];        
-        if (is>ps)
-            c++;
+        if (BeginsWith(line,"forward"))
+        {
+            int n = atoi(line.c_str()+fl);
+            horizontal_position += n;
+            depth += aim*n;
+        }
+        else if (BeginsWith(line,"down"))
+        {
+            aim += atoi(line.c_str()+dl);
+        }
+        else if (BeginsWith(line,"up"))
+        {
+            aim -= atoi(line.c_str()+ul);
+        }
     }
-    cout << c << endl;
-    */
+    cout << horizontal_position 
+         << " * " 
+         << depth 
+         << " = "
+         << horizontal_position*depth
+         << endl;
 }
