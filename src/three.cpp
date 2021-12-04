@@ -131,8 +131,3 @@ void Three()
     const int rating = ox_int*scrub_int;
     cout << "rating = " << rating << endl;
 }
-
-void Three_B()
-{
-    
-}
