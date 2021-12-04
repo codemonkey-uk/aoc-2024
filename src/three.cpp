@@ -59,7 +59,49 @@ int BString2Int(const string& b)
     return result;
 }
 
-void Three_A()
+char oxygen_criteria(const vector< string >& data, int pos)
+{
+    int ones = 0;
+    for (const string& line : data)
+    {
+        ones += (line[pos]=='1');
+    }
+
+    const int zeros = data.size()-ones;
+    if (ones >= zeros) return '1';
+    else return '0';
+}
+
+char scrubber_criteria(const vector< string >& data, int pos)
+{
+    return oxygen_criteria(data,pos)=='1' ? '0' : '1';
+}
+
+string rating( 
+    vector< string > data, 
+    char(*fn)(const vector< string >&, int) 
+)
+{
+    for (int i=0;i!=data_width;++i)
+    {
+        char m = fn(data,i);
+        
+        auto e = remove_if(
+            data.begin(),data.end(),
+            [i,m](const auto& line){
+                return line[i]!=m;
+            }
+        );
+        data.erase(e,data.end());
+
+        if (data.size()==1)
+            break;
+    }
+    assert(data.size()==1);
+    return data.front();
+}
+
+void Three()
 {
     string line;
     vector< string > data;
@@ -78,6 +120,16 @@ void Three_A()
     cout << "epsilon = " << epsilon << " = " << BString2Int(epsilon) << endl;
     const int consumption = gamma_int*epsilon_int;
     cout << "consumption = " << consumption << endl;
+    
+    string ox = rating( data, oxygen_criteria );
+    const int ox_int = BString2Int(ox);
+    cout << ox << " = " << ox_int << endl;
+    string scrub = rating( data, scrubber_criteria );
+    const int scrub_int = BString2Int(scrub);
+    cout << scrub << " = " << scrub_int << endl;
+    
+    const int rating = ox_int*scrub_int;
+    cout << "rating = " << rating << endl;
 }
 
 void Three_B()
