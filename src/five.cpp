@@ -42,7 +42,18 @@ class Grid
         for (int x = x1;x<=x2;++x)
             get(x,y)++;
     }
-    
+    void doDiagnal(int x1, int y1, int x2, int y2)
+    {
+        int dx = x1>x2 ? -1 : 1;
+        int dy = y1>y2 ? -1 : 1;
+        get(x1,y1)++;
+        do
+        {
+            x1+=dx;
+            y1+=dy;
+            get(x1,y1)++;
+        }while(x1!=x2);
+    }    
     int count() const
     {
         int r=0;
@@ -84,7 +95,7 @@ struct Line{
     }
 };
 
-void Five()
+void Five(bool part2)
 {
     string line;
     
@@ -118,11 +129,20 @@ void Five()
             grid.doColumn(line.x1,line.y1,line.y2);
         else if (line.y1==line.y2)
             grid.doRow(line.y1,line.x1,line.x2);
-        else
-            line.Print();
+        else if (part2)
+            grid.doDiagnal(line.x1, line.y1, line.x2,line.y2);
     }
     
     cout << "result: " << grid.count() << endl;
 }
 
+void Five_A()
+{
+    Five(false);
+}
+
+void Five_B()
+{
+    Five(true);
+}
 

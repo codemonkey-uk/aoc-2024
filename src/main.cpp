@@ -1,8 +1,8 @@
 #include <iostream>
 
-void Five();
+void Five_B();
 
 int main(int, char**)
 {
-	Five();
+	Five_B();
 }
