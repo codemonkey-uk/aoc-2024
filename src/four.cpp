@@ -4,39 +4,11 @@
 #include <cstring>
 #include <cctype>
 
+#include "util.h"
+
 using namespace std;
 
-template< typename pred >
-vector< string > Split( const string& in, pred fn )
-{
-    vector< string > result;
-
-    auto last = in.end();
-    auto a = in.begin();
-
-    result.reserve( count_if( a, last, fn ) );
-
-    while(a!=last) {
-        auto b = find_if(a, last, fn);
-        if (b==last)
-            break;
-            
-        result.push_back( string(a, b) );
-        a = ++b;
-    }
-    
-    result.push_back( string(a, last) );
-
-    return result;
-}
-
-template< typename pred >
-vector< string > Filter( vector< string > data, pred fn )
-{
-    auto e = remove_if( data.begin(),data.end(),fn );
-    data.erase(e,data.end());
-    return data;
-}
+// moved to Util
 
 const size_t expected_size = 5;
 typedef vector< string > RowSrc;
