@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
 template< typename pred >
 std::vector< std::string > Split( const std::string& in, pred fn )
