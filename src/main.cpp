@@ -1,8 +1,8 @@
 #include <iostream>
 
-void Seven();
+void Eight();
 
 int main(int, char**)
 {
-	Seven();
+	Eight();
 }
