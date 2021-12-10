@@ -43,26 +43,47 @@ void Ten()
 {
     size_t sum = 0;
     string line;
-
+    vector< size_t > points;
     while(getline(cin,line))
     {
+        // part 1
+        bool syntax_error=false;
         vector<char> stack;
         for (size_t i=0;i!=line.size();++i)
         {
-            if (stack.size()>0 && line[i]==match(stack.back())) {
+            if (stack.empty()==false && line[i]==match(stack.back())) {
                 stack.pop_back();
             } 
             else if (match(line[i])) {
                 stack.push_back(line[i]);
             }
             else {
-                cout << line << "Expected '" << match(stack.back()) 
+                cout << line << " Expected '" << match(stack.back()) 
                      << "' but found '" << line[i]
                      << "' on column " << i << endl;
                 sum+=score(line[i]);
+                syntax_error=true;
                 break;
             }
         }
+        // part 2
+        if (stack.empty()==false && syntax_error==false)
+        {
+            size_t completion_score = 0;
+            while(stack.empty()==false)
+            {
+                completion_score *= 5;
+                char m = match(stack.back());
+                completion_score += score_2(m);
+                cout << m;
+                stack.pop_back();
+            }
+            cout << " - " << completion_score << " total points." << endl;
+            points.push_back( completion_score );
+        }
     }
-    cout << sum << endl;
+    cout << "part 1: " << sum << endl;
+    
+    sort(points.rbegin(),points.rend());
+    cout << "part 2: " << points[points.size()/2] << endl;
 }
