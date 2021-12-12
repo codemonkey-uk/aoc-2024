@@ -8,12 +8,15 @@
 
 using namespace std;
 
+bool debug=false;
+
 struct Node
 {
     Node(const string& n):name(n){}
     Node(const char* n):name(n){}
     
     string name;
+    mutable int visits=0;
     mutable vector< const Node* > edges;
     bool small()const{return name[0]==tolower(name[0]);}
     
@@ -37,9 +40,12 @@ void Explore( Path& path, const Node* node, int* count )
     
     if (node->name=="end")
     {
-        for(const Node* step : path)
-            cout << step->name << ",";
-        cout << node->name << "." << endl;
+        if (debug)
+        {
+            for(const Node* step : path)
+                cout << step->name << ",";
+            cout << node->name << "." << endl;
+        }
         (*count)++;
         return;
     }
@@ -50,6 +56,48 @@ void Explore( Path& path, const Node* node, int* count )
         Explore(path,next,count);
     }
     path.pop_back();
+}
+
+void Explore2( Path& path, const Node* node, int* count )
+{
+    if (node->small())
+    {
+        //we can visit ONE small node TWICE
+        if (node->visits>0)
+        {
+            // any nodes with >1 visits on path already?
+            if(find_if(path.begin(),path.end(),
+                [](auto nop){return nop->small() && nop->visits>1;})!=path.end())
+                return;
+                
+            // also dont return to 1st node
+            if (node==path[0])
+                return;
+        }
+    }
+    
+    if (node->name=="end")
+    {
+        if (debug)
+        {
+            for(const Node* step : path)
+                cout << step->name << ",";
+            cout << node->name << "." << endl;
+        }
+        (*count)++;
+        return;
+    }
+    
+    path.push_back(node);
+    node->visits++;
+    
+    for (const Node* next : node->edges)
+    {
+        Explore2(path,next,count);
+    }
+    
+    path.pop_back();
+    node->visits--;
 }
 
 void Twelve()
@@ -70,18 +118,25 @@ void Twelve()
         );
     }
     
-    /*
-    for (const auto& node : graph)
+    if (debug)
     {
-        for (const auto& edge : node.edges)
+        for (const auto& node : graph)
         {
-            cout << node.name << "-" << edge->name << endl;
+            for (const auto& edge : node.edges)
+            {
+                cout << node.name << "-" << edge->name << endl;
+            }
         }
     }
-    */
     
     Path path;
     int count = 0;
     Explore(path, &*graph.find("start"), &count);
-    cout << "total: " << count << endl;
+    cout << "part 1: " << count << endl;
+    
+    count = 0;
+    assert(path.size()==0);
+    Explore2(path, &*graph.find("start"), &count);
+    cout << "part 2: " << count << endl;
+    
 }
