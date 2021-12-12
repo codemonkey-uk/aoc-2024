@@ -28,6 +28,11 @@ std::vector< std::string > Split( const std::string& in, pred fn )
     return result;
 }
 
+std::vector< std::string > Split( const std::string& in, char c )
+{
+    return Split(in, [c](char c2){return c==c2;});
+}
+
 template< typename pred >
 std::vector< std::string > Filter( std::vector< std::string > data, pred fn )
 {

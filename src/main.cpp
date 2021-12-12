@@ -1,8 +1,8 @@
 #include <iostream>
 
-void Eleven();
+void Twelve();
 
 int main(int, char**)
 {
-	Eleven();
+	Twelve();
 }
