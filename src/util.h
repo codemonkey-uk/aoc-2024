@@ -28,7 +28,7 @@ std::vector< std::string > Split( const std::string& in, pred fn )
     return result;
 }
 
-std::vector< std::string > Split( const std::string& in, char c )
+inline std::vector< std::string > Split( const std::string& in, char c )
 {
     return Split(in, [c](char c2){return c==c2;});
 }
@@ -40,3 +40,5 @@ std::vector< std::string > Filter( std::vector< std::string > data, pred fn )
     data.erase(e,data.end());
     return data;
 }
+
+extern bool debug;

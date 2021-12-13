@@ -1,8 +1,10 @@
 #include <iostream>
 
-void Twelve();
+bool debug=false;
+
+void Thirteen();
 
 int main(int, char**)
 {
-	Twelve();
+	Thirteen();
 }

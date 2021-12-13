@@ -8,8 +8,6 @@
 
 using namespace std;
 
-bool debug=false;
-
 struct Node
 {
     Node(const string& n):name(n){}
