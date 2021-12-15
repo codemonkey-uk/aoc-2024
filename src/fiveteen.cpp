@@ -142,38 +142,87 @@ void Fiveteen()
     // load 1d decimal char into a grid of int
     string line;
     getline(cin,line);
-    const size_t w = line.size();
+    const int w = line.size();
     vector<string> lines;
     do
     {
-        assert(line.size()==w);
+        assert(line.size()==(size_t)w);
         lines.push_back(line);
     } while (getline(cin,line));
-    const size_t h = lines.size();
+    const int h = lines.size();
     Grid< int > grid( w, h );
-    for (size_t x=0;x!=w;++x)
+    for (int x=0;x!=w;++x)
     {
-        for (size_t y=0;y!=h;++y)
+        for (int y=0;y!=h;++y)
         {
             int i = lines[y][x]-'0';
             assert(i >= 0 && i < 10);
             grid.get(x,y) = i;
         }
     }
-    Print(grid);
-    
-    astar_node start( &grid, 0,0 );
-    astar_node end( &grid, grid.width-1, grid.height-1 );
-    astar_behaviour behaviour;
-    deque< astar_node > results;
-    astar::config<astar_node> cfg;
-    
-    if (astar::astar(start, end, results, behaviour, cfg))
+    if (debug) Print(grid);
+
+    // PART 1
     {
-        cout << "Success" << endl;
-        PrintMasked(grid, results);
+        astar_node start( &grid, 0,0 );
+        astar_node end( &grid, grid.width-1, grid.height-1 );
+        astar_behaviour behaviour;
+        deque< astar_node > results;
+        astar::config<astar_node> cfg;
+    
+        if (astar::astar(start, end, results, behaviour, cfg))
+        {
+            cout << "Success" << endl;
+            if (debug) PrintMasked(grid, results);
         
-        cout << "Total risk: " << cfg.route_cost << endl;
+            cout << "Total risk: " << cfg.route_cost << endl;
+        }
     }
+    
+    // PART 2
+    Grid< int > grid2( w*5, h*5 );
+    for (int x=0;x!=w*5;++x)
+    {
+        for (int y=0;y!=h*5;++y)
+        {
+        
+            int i = 0;
+            if (y<h && x<w)
+            {
+                i = lines[y][x]-'0';
+            }
+            else
+            {
+                int nx=x,ny=y;
+                // prefer left, but if hard left try above
+                if (nx >= w) nx-=w;
+                else ny-=h;
+                
+                i = grid2.get(nx,ny) + 1;
+                if (i>9) i = 1;
+            }
+            
+            assert(i >= 0 && i < 10);
+            grid2.get(x,y) = i;
+        }
+    }    
+    if (debug) Print(grid2);
+    
+    {
+        astar_node start( &grid2, 0,0 );
+        astar_node end( &grid2, grid2.width-1, grid2.height-1 );
+        astar_behaviour behaviour;
+        deque< astar_node > results;
+        astar::config<astar_node> cfg;
+    
+        if (astar::astar(start, end, results, behaviour, cfg))
+        {
+            cout << "Success" << endl;
+            if (debug) PrintMasked(grid2, results);
+        
+            cout << "Total risk: " << cfg.route_cost << endl;
+        }
+    }
+    
 
 }
