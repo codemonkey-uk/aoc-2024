@@ -3,26 +3,9 @@
 #include <iostream>
 #include <vector>
 
-using namespace std;
+#include "util.h"
 
-template< typename T >
-class Grid
-{
-    public:
-    // width = x, height = y
-    Grid(int w, int h) : width(w), height(h)
-    {
-        data.resize(w*h);
-    }
-    
-    T& get(int x, int y) {
-        return data[x+y*width];
-    }
-  
-    const int width=0;
-    const int height=0;
-    vector< T > data;
-};
+using namespace std;
 
 struct Octopus {
     int energy;

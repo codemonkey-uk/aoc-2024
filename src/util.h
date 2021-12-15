@@ -41,4 +41,27 @@ std::vector< std::string > Filter( std::vector< std::string > data, pred fn )
     return data;
 }
 
+template< typename T >
+class Grid
+{
+    public:
+    // width = x, height = y
+    Grid(int w, int h) : width(w), height(h)
+    {
+        data.resize(w*h);
+    }
+
+    const T& get(int x, int y) const {
+        return data[x+y*width];
+    }
+    
+    T& get(int x, int y) {
+        return data[x+y*width];
+    }
+  
+    const int width=0;
+    const int height=0;
+    std::vector< T > data;
+};
+
 extern bool debug;
