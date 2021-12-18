@@ -391,6 +391,8 @@ void CheckMagnatude(const char* str, intptr_t expected)
 
 void Eighteen()
 {
+    cout << "SELF-TEST:" << endl;
+    
     CheckReadWrite("[1,2]");
     CheckReadWrite("[[3,4],5]");
     CheckReadWrite("[[1,2],[[3,4],5]]");
@@ -422,16 +424,44 @@ void Eighteen()
     CheckMagnatude("[[[[5,0],[7,4]],[5,5]],[6,6]]", 1137);
     CheckMagnatude("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]", 3488);
 
+    vector< string > all;
+    all.reserve(100);
+    
     string line;
     if (getline(cin,line))
     {
+        all.push_back(line);
         SnailfishNumber* sum = ReadLine(line);
         while (getline(cin,line))
         {
+            all.push_back(line);
             sum = new SnailfishNumber(sum, ReadLine(line));
         }
+        cout << "PART 1:" << endl;
         cout << sum->ToString() << endl;
         cout << sum->Magnitude() << endl;
+        delete sum;
+        
+        intptr_t biggest = 0;
+        for (auto a = all.begin();a!=all.end();++a)
+        {
+            for (auto b = all.begin();b!=all.end();++b)
+            {
+                if (a!=b)
+                {
+                    auto sum = new SnailfishNumber(ReadLine(*a), ReadLine(*b));
+                    auto m = sum->Magnitude();
+                    if (m>biggest)
+                    {
+                        biggest = m;
+                    }
+                    delete sum;
+                }
+            }
+        }
+        
+        cout << "PART 2:" << endl;
+        cout << biggest << endl;
     }
     
 }
