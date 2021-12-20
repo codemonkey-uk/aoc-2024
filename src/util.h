@@ -58,9 +58,11 @@ class Grid
     T& get(int x, int y) {
         return data[x+y*width];
     }
+    
+    void fill(T c) { for(T& d:data)c=d; }
   
-    const int width=0;
-    const int height=0;
+    int width=0;
+    int height=0;
     std::vector< T > data;
 };
 

@@ -2,9 +2,9 @@
 
 bool debug=true;
 
-void Seventeen();
+void Twenty();
 
 int main(int, char**)
 {
-	Seventeen();
+	Twenty();
 }
