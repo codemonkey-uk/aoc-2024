@@ -6,11 +6,12 @@
 #include <iostream>
 #include <vector>
 #include <stdio.h>
+#include <limits>
 
 using namespace std;
 using namespace Geometry;
 
-typedef AxisAlignedBoundingBox3d<int> Aabb;
+typedef AxisAlignedBoundingBox3d<long long> Aabb;
 
 typedef pair< Aabb, int > Command;
 
@@ -38,6 +39,10 @@ Command ReadCommand(const string& line)
         );
     }
     
+    if (x1>x2) swap(x1,x2);
+    if (y1>y2) swap(y1,y2);
+    if (z1>z2) swap(z1,z2);
+    
     Command result{{{x1,y1,z1},{x2+1,y2+1,z2+1}},onoff};    
     return result;
 }
@@ -60,7 +65,17 @@ void TwentyTwo()
     size_t runningTotal = 0;
 
     //x=-50..50,y=-50..50,z=-50..50
-    Aabb clipRegion({-50,-50,-50},{50+1,50+1,50+1});
+    // Aabb clipRegion({-50,-50,-50},{50+1,50+1,50+1});
+    Aabb clipRegion({
+        numeric_limits<Aabb::VectorType::ScalarType>::lowest(),
+        numeric_limits<Aabb::VectorType::ScalarType>::lowest(),
+        numeric_limits<Aabb::VectorType::ScalarType>::lowest()
+    },
+    {
+        numeric_limits<Aabb::VectorType::ScalarType>::max(),
+        numeric_limits<Aabb::VectorType::ScalarType>::max(),
+        numeric_limits<Aabb::VectorType::ScalarType>::max()
+    });
     
     while (getline(cin, line))
     {
@@ -70,7 +85,7 @@ void TwentyTwo()
         {
             if (c.second==1)
             {
-                const int max_diff = c.first.GetVolume();
+                const auto max_diff = c.first.GetVolume();
                 cout << "turn ON a " 
                     << c.first.GetAxisExtent(0) << "x"
                     << c.first.GetAxisExtent(1) << "x"
@@ -99,7 +114,7 @@ void TwentyTwo()
             }
             else if (c.second==0)
             {
-                const int max_diff = c.first.GetVolume();
+                const auto max_diff = c.first.GetVolume();
                 cout << "turn OFF a " 
                     << c.first.GetAxisExtent(0) << "x"
                     << c.first.GetAxisExtent(1) << "x"
