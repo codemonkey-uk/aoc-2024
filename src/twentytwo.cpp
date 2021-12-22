@@ -96,7 +96,7 @@ void TwentyTwo()
                         << c.first.GetAxisExtent(2) << " cuboid " 
                         << " (" << max_diff << " cubes)" 
                         << endl;
-                }            
+                }
                 vector< Aabb > newBoxes;
                 newBoxes.push_back( c.first );
                 for (Aabb a : onBoxes)
@@ -150,6 +150,7 @@ void TwentyTwo()
         }
     }
     
-    cout << "Part 1 result: " << runningTotal << " cubes are on."<< endl;
+    cout << "Result: " << runningTotal << " cubes are on ("
+        << onBoxes.size() << " boxes)"<< endl;
 }
 
