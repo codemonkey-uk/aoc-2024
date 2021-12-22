@@ -1,6 +1,6 @@
 #include <iostream>
 
-bool debug=true;
+bool debug=false;
 
 void TwentyTwo();
 

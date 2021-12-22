@@ -11,6 +11,8 @@
 using namespace std;
 using namespace Geometry;
 
+extern bool debug;
+
 typedef AxisAlignedBoundingBox3d<long long> Aabb;
 
 typedef pair< Aabb, int > Command;
@@ -49,11 +51,11 @@ Command ReadCommand(const string& line)
 
 size_t DebugStat(const vector< Aabb >& onBoxes)
 {
-    cout << onBoxes.size() << " boxes ";
+    if (debug) cout << onBoxes.size() << " boxes ";
     size_t total = 0;
     for(Aabb a : onBoxes )
         total += a.GetVolume();
-    cout << total << " cubes." << endl;
+    if (debug) cout << total << " cubes." << endl;
     return total;
 }
 
@@ -80,19 +82,21 @@ void TwentyTwo()
     while (getline(cin, line))
     {
         Command c = ReadCommand(line);
-        cout << line << endl;
+        if (debug) cout << line << endl;
         if (clipRegion.Contains(c.first))
         {
             if (c.second==1)
             {
                 const auto max_diff = c.first.GetVolume();
-                cout << "turn ON a " 
-                    << c.first.GetAxisExtent(0) << "x"
-                    << c.first.GetAxisExtent(1) << "x"
-                    << c.first.GetAxisExtent(2) << " cuboid " 
-                    << " (" << max_diff << " cubes)" 
-                    << endl;
-            
+                if (debug)
+                {
+                    cout << "turn ON a " 
+                        << c.first.GetAxisExtent(0) << "x"
+                        << c.first.GetAxisExtent(1) << "x"
+                        << c.first.GetAxisExtent(2) << " cuboid " 
+                        << " (" << max_diff << " cubes)" 
+                        << endl;
+                }            
                 vector< Aabb > newBoxes;
                 newBoxes.push_back( c.first );
                 for (Aabb a : onBoxes)
@@ -108,20 +112,22 @@ void TwentyTwo()
                 onBoxes.insert( onBoxes.end(), newBoxes.begin(), newBoxes.end() );
                 size_t newTotal = DebugStat(onBoxes);
                 const int diff = (newTotal - runningTotal);
-                cout << " = " << diff << " additional cubes" << endl;
+                if (debug) cout << " = " << diff << " additional cubes" << endl;
                 assert(diff<=max_diff);
                 runningTotal = newTotal;
             }
             else if (c.second==0)
             {
                 const auto max_diff = c.first.GetVolume();
-                cout << "turn OFF a " 
-                    << c.first.GetAxisExtent(0) << "x"
-                    << c.first.GetAxisExtent(1) << "x"
-                    << c.first.GetAxisExtent(2) << " cuboid " 
-                    << " (" << max_diff << " cubes)" 
-                    << endl;
-            
+                if (debug)
+                {
+                    cout << "turn OFF a " 
+                        << c.first.GetAxisExtent(0) << "x"
+                        << c.first.GetAxisExtent(1) << "x"
+                        << c.first.GetAxisExtent(2) << " cuboid " 
+                        << " (" << max_diff << " cubes)" 
+                        << endl;
+                }
                 vector< Aabb > remainingBoxes;
                 auto itr = back_inserter(remainingBoxes);
                 for (Aabb a : onBoxes)
@@ -132,7 +138,7 @@ void TwentyTwo()
 
                 size_t newTotal = DebugStat(remainingBoxes);
                 const int diff = runningTotal-newTotal;
-                cout << " = " << diff << " cubes removed" << endl;
+                if (debug) cout << " = " << diff << " cubes removed" << endl;
                 assert(diff<=max_diff);
                 runningTotal = newTotal;
                 onBoxes = remainingBoxes;
