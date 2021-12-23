@@ -1,10 +1,10 @@
 #include <iostream>
 
-bool debug=false;
+bool debug=true;
 
-void TwentyTwo();
+void TwentyThree();
 
 int main(int, char**)
 {
-	TwentyTwo();
+	TwentyThree();
 }

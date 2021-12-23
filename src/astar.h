@@ -29,6 +29,8 @@
     #include <iostream>
 #endif
 
+// #define ASTAR_VALIDATE
+
 namespace astar
 {
     //from <vector>
@@ -176,7 +178,7 @@ namespace astar
     struct node_link{
         typedef T value_type;
         typedef typename T::iterator::cost_type scalar;
-        typedef std::set<node_link> container;
+        typedef std::unordered_set<node_link> container;
     
         node_link(){}
 
@@ -403,7 +405,23 @@ namespace astar
                         //replace node cost with new path to this node
                         (inserted_at)->myG = g;
                         (inserted_at)->myParent = &*index;
-                    
+
+#ifdef ASTAR_VALIDATE
+                        nodeType parent_node = (inserted_at)->myParent->myNode;
+                        nodeType match_next = (inserted_at)->myNode;
+                        if (next != match_next )
+                        {
+                            next.Print();
+                            match_next.Print();
+                        }
+                        
+                        // check parent-child link is valid
+                        assert( std::find(
+                            parent_node.begin(), 
+                            parent_node.end(), 
+                            (inserted_at)->myNode) != parent_node.end() );
+#endif
+
                         // see: http://theory.stanford.edu/~amitp/GameProgramming/path.cpp
                         push_heap( 
                             pending.begin(), 
