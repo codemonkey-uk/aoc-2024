@@ -136,11 +136,13 @@ int StepMap(Map& a, Map& b)
     return east+south;
 }
 
+/*
 void DebugOut(const Map &map)
 {
     for (auto l : ToString(map) )
         cout << l << endl;
 }
+*/
 
 int StepsUntilStopped(Map a)
 {
