@@ -79,16 +79,18 @@ namespace Geometry
         
         // distance and length
         // todo !!! not using get/compute naming convention
+        Scalar ManhattanLength() const;
         Scalar LengthSquare() const;
         Scalar Length() const;
+        Scalar ManhattanDistance(const VectorN& rhs) const;
         Scalar DistanceSquare(const VectorN& rhs) const;
         Scalar Distance(const VectorN& rhs) const;
-        
+
         // binary operators
         VectorN& operator = (const VectorN& rhs);
         VectorN& operator += (const VectorN& rhs);
         VectorN& operator -= (const VectorN& rhs);
-        VectorN& operator *= (const VectorN& rhs);        
+        VectorN& operator *= (const VectorN& rhs);
         VectorN& operator /= (const Scalar rhs);
         VectorN& operator *= (const Scalar rhs);
         bool operator == (const VectorN& rhs) const;
@@ -158,7 +160,7 @@ namespace Geometry
         return arg;
     }
     
-    template<typename Scalar, size_t N>    
+    template<typename Scalar, size_t N>
     void ComputeMidpoint(const VectorN<Scalar, N>& a, const VectorN<Scalar, N>& b, VectorN< Scalar, N>* ab )
     {
         for(size_t i=0;i!=N;++i)
@@ -213,6 +215,14 @@ namespace Geometry
     }
     
     template< typename Scalar, size_t N >
+    Scalar VectorN<Scalar,N>::ManhattanLength() const {
+        Scalar l2 = 0;
+        for (size_t i=0;i<N;++i)
+            l2 += Abs(mData[i]);
+        return l2;
+    }
+    
+    template< typename Scalar, size_t N >
     Scalar VectorN<Scalar,N>::LengthSquare() const {
         Scalar l2 = 0;
         for (size_t i=0;i<N;++i)
@@ -223,6 +233,16 @@ namespace Geometry
     template< typename Scalar, size_t N >
     Scalar VectorN<Scalar,N>::Length() const {
         return Sqrt( LengthSquare() );
+    }
+    
+    template< typename Scalar, size_t N >
+    Scalar VectorN<Scalar,N>::ManhattanDistance(const VectorN& rhs) const {
+        Scalar l2 = 0;
+        for (size_t i=0;i<N;++i)
+        {
+            l2 += Abs(rhs.mData[i] - mData[i]);
+        }
+        return l2;
     }
     
     template< typename Scalar, size_t N >

@@ -1,10 +1,10 @@
 // -------------------------------------------------------------------------
-// Filename:	astar.h
-// Version:		2
-// Date:		2002/03/08
-// Purpose:		Provide template for a* algorythm
+// Filename:    astar.h
+// Version:     3
+// Purpose:     Provide template for a* algorithm
 // (c) T.Frogley 1999-2021
-// Updated: 2021 to better support behaviour controls 
+// Stable and used in many projects 2003-2021+
+// Updated: 2021 to better support behaviour controls, & unordered_set
 // -------------------------------------------------------------------------
 
 #ifndef ASTAR_H
@@ -17,7 +17,6 @@
 
 //include standard library code
 #include <vector>
-#include <set>
 #include <unordered_set>
 #include <functional>
 #include <algorithm>
@@ -29,15 +28,12 @@
     #include <iostream>
 #endif
 
-// #define ASTAR_VALIDATE
-
 namespace astar
 {
     //from <vector>
     using std::vector;
 
-    //from <set>
-    using std::set;
+    //from <unordered_set>
     using std::unordered_set;
 
     //from <functional>
@@ -54,7 +50,7 @@ namespace astar
     //unfortunatly the Microsoft compiler\headers arn't standard compliant
     //see: http://x42.deja.com/getdoc.xp?AN=520752890
 
-    //thus:	
+    //thus: 
     #ifdef _MSC_VER
 
         #ifdef max 
@@ -86,12 +82,12 @@ namespace astar
 
             //copy constructor and assignment operator should be available
 
-            typedef double cost_type;	//typedef required, must be scalar type
+            typedef double cost_type;   //typedef required, must be scalar type
 
-            example_node value()const;	//node
-            cost_type cost()const;		//cost/distance to node
+            example_node value()const;  //node
+            cost_type cost()const;      //cost/distance to node
         
-            iterator& operator++();		//next node
+            iterator& operator++();     //next node
         
             bool operator!=(iterator v);//used by search
 
@@ -178,11 +174,10 @@ namespace astar
     struct node_link{
         typedef T value_type;
         typedef typename T::iterator::cost_type scalar;
-        typedef std::unordered_set<node_link> container;
     
         node_link(){}
 
-        node_link(T n, scalar h, typename container::iterator p):
+        node_link(T n, scalar h, const node_link* p):
             myNode(n),
             myH(h),
             myStatus(eNodeNotListed),
@@ -190,7 +185,7 @@ namespace astar
             myParent(&*p)
             { }
             
-        node_link(T n, scalar g, scalar h, typename container::iterator p):
+        node_link(T n, scalar g, scalar h, const node_link* p):
             myNode(n),
             myH(h),
             myStatus(eNodeNotListed),
@@ -208,8 +203,8 @@ namespace astar
         inline bool costs_more(const node_link<T> &b)const noexcept
             { return (myG+myH > b.myG+b.myH); }
 
-        inline bool has_parent(typename container::iterator orphanValue) const noexcept
-            { return myParent!=&*orphanValue; }
+        inline bool has_parent() const noexcept
+            { return myParent!=nullptr; }
 
         T myNode;
         scalar myH;
@@ -224,108 +219,108 @@ namespace astar
         static const size_t sOrphan = static_cast<size_t>(-1);
     };
 
-	//binary_lookup functor (astar implemetatoin helper class)
-	//	key	: key to container
-	template<class key>
-	class binary_lookup : public binary_function<key, key, bool> {
-		
-		public:
-			//constructor, take a copy of functor, 
-			//and keep a reference to the container
-			binary_lookup()
-			{ }
-		
-			//look up two values in contianer from keys a and b,
-			//pass values to binary functor, and return result
-			bool operator()(
-				const key& a, 
-				const key& b	)
-			//{ return fn(c[a], c[b]); }
+    //binary_lookup functor (astar implemetatoin helper class)
+    //  key : key to container
+    template<class key>
+    class binary_lookup : public binary_function<key, key, bool> {
+        
+        public:
+            //constructor, take a copy of functor, 
+            //and keep a reference to the container
+            binary_lookup()
+            { }
+        
+            //look up two values in contianer from keys a and b,
+            //pass values to binary functor, and return result
+            bool operator()(
+                const key& a, 
+                const key& b    )
+            //{ return fn(c[a], c[b]); }
             {return a->costs_more(*b); }
-	};
+    };
 
-	//configuration info for astar algorythm
-	//also used to return some additional information about the finished search
-	template<class nodeType>
-	struct config{
-		typedef typename nodeType::iterator::cost_type scalar;
-		
-		//construct with sensable defaults / empty results
-		config():
-		node_limit(std::numeric_limits<size_t>::max()),
-		cost_limit(std::numeric_limits<scalar>::max()),
-		result_nodes_examined(0),
-		result_nodes_pending(0),
-		result_nodes_opened(0),
-		route_length(0),
-		route_cost()
-		{ }
-		
-		//configuration variables
+    //configuration info for astar algorythm
+    //also used to return some additional information about the finished search
+    template<class nodeType>
+    struct config{
+        typedef typename nodeType::iterator::cost_type scalar;
+        
+        //construct with sensable defaults / empty results
+        config():
+        node_limit(std::numeric_limits<size_t>::max()),
+        cost_limit(std::numeric_limits<scalar>::max()),
+        result_nodes_examined(0),
+        result_nodes_pending(0),
+        result_nodes_opened(0),
+        route_length(0),
+        route_cost()
+        { }
+        
+        //configuration variables
 
-		//node_limit
-		//set this to restrict the number of nodes astar will open
-		//has the effect of limiting the amount of time spent searching
-		size_t node_limit;	
+        //node_limit
+        //set this to restrict the number of nodes astar will open
+        //has the effect of limiting the amount of time spent searching
+        size_t node_limit;  
 
-		//cost limit
-		//set this to restrict the maximum distance considered 
-		//acceptable for a route
-		//if astar cannot find a shorter route than this it will fail
-		scalar cost_limit;
-		
-		//result variables
-		
-		//result_nodes_examined
-		//astart sets the to the total number of nodes it 
-		//'looked at'  when the search terminated
-		size_t result_nodes_examined;
+        //cost limit
+        //set this to restrict the maximum distance considered 
+        //acceptable for a route
+        //if astar cannot find a shorter route than this it will fail
+        scalar cost_limit;
+        
+        //result variables
+        
+        //result_nodes_examined
+        //astart sets the to the total number of nodes it 
+        //'looked at'  when the search terminated
+        size_t result_nodes_examined;
 
-		//result_nodes_pending
-		//astar sets this to the number of nodes still waiting 
-		//to be examined when the search terminated
-		size_t result_nodes_pending;
+        //result_nodes_pending
+        //astar sets this to the number of nodes still waiting 
+        //to be examined when the search terminated
+        size_t result_nodes_pending;
 
-		//result_nodes_opened
-		//astar sets this to the total number of nodes it fetched
-		//should equal pending + examined
-		size_t result_nodes_opened;
+        //result_nodes_opened
+        //astar sets this to the total number of nodes it fetched
+        //should equal pending + examined
+        size_t result_nodes_opened;
 
-		//route_length
-		//astar sets this to equal the total number of nodes
-		//used to construct the returned route
-		unsigned int route_length;
+        //route_length
+        //astar sets this to equal the total number of nodes
+        //used to construct the returned route
+        unsigned int route_length;
 
-		//route_cost
-		//astart sets the to equal the total "cost" of 
-		//the returned route
-		scalar route_cost;
-	};
+        //route_cost
+        //astart sets the to equal the total "cost" of 
+        //the returned route
+        scalar route_cost;
+    };
 
-	//astar algorithm, as template, 
-	//find a path from a to b, 
-	//using the given behaviour (providing heuristic), 
-	//places results in container [ any class that can push_front( nodeType ) ]
-	//returns flase if no route exists
-	//returns true if a complete route is found
-	//returns true if it exceeds node_limit, but a partial route is found
-	//returns false (aborts with a partial route) if it exceeds cost_limit
-	template<class behaviourType, class nodeType, class container>
-	bool astar(const nodeType a, const nodeType b, container &results, behaviourType behaviour, config<nodeType> &cfg)
-	{
-		#ifdef ASTAR_STATS
-		clock_t time = clock();
-		#endif
+    //astar algorithm, as template, 
+    //find a path from a to b, 
+    //using the given behaviour (providing heuristic), 
+    //places results in container [ any class that can push_front( nodeType ) ]
+    //returns flase if no route exists
+    //returns true if a complete route is found
+    //returns true if it exceeds node_limit, but a partial route is found
+    //returns false (aborts with a partial route) if it exceeds cost_limit
+    template<class behaviourType, class nodeType, class container>
+    bool astar(const nodeType a, const nodeType b, container &results, behaviourType behaviour, config<nodeType> &cfg)
+    {
+        #ifdef ASTAR_STATS
+        clock_t time = clock();
+        #endif
 
         typedef node_link<nodeType> node;
-        typedef typename node::container node_container;
+        typedef unordered_set<node> node_container;
         typedef vector<typename node_container::iterator> index_container;
         typedef typename nodeType::iterator node_iterator;
         typedef typename nodeType::iterator::cost_type scalar;
 
-        node_container nodes;		//all nodes opened
-        index_container pending;	//sorted index to pending nodes
-        index_container done;		//unsorted index to nodes already explored
+        node_container nodes;       //all nodes opened
+        index_container pending;    //sorted index to pending nodes
+        index_container done;       //unsorted index to nodes already explored
         typename node_container::iterator index;
         bool complete = false;
     
@@ -346,7 +341,7 @@ namespace astar
 
         //stick the fist node into the list, 
         //and its index into the pending list
-        index = nodes.insert( nodes.begin(), node( a, behaviour.heuristic(a,b), nodes.end() ));
+        index = nodes.insert( nodes.begin(), node( a, behaviour.heuristic(a,b), nullptr ));
         pending.push_back( index );
         index->myStatus = node::eNodePending;
 
@@ -380,7 +375,7 @@ namespace astar
 
                 typename node_container::iterator inserted_at;
                 scalar g = i.cost()+current.myG;
-                inserted_at = nodes.insert( nodes.begin(), node(next, g, behaviour.heuristic(next, b), index ) );                
+                inserted_at = nodes.insert( nodes.begin(), node(next, g, behaviour.heuristic(next, b), &*index ) );
 
                 //not in the pending list
                 if (inserted_at->myStatus != node::eNodePending){
@@ -388,7 +383,7 @@ namespace astar
                     //not in done list (or pending list)
                     if (inserted_at->myStatus != node::eNodeDone){
 
-                        //add to pending list						
+                        //add to pending list                       
                         pending.push_back( inserted_at );
                         inserted_at->myStatus = node::eNodePending;
                         push_heap( pending.begin(), pending.end(), sort_index_object );
@@ -405,23 +400,7 @@ namespace astar
                         //replace node cost with new path to this node
                         (inserted_at)->myG = g;
                         (inserted_at)->myParent = &*index;
-
-#ifdef ASTAR_VALIDATE
-                        nodeType parent_node = (inserted_at)->myParent->myNode;
-                        nodeType match_next = (inserted_at)->myNode;
-                        if (next != match_next )
-                        {
-                            next.Print();
-                            match_next.Print();
-                        }
-                        
-                        // check parent-child link is valid
-                        assert( std::find(
-                            parent_node.begin(), 
-                            parent_node.end(), 
-                            (inserted_at)->myNode) != parent_node.end() );
-#endif
-
+                    
                         // see: http://theory.stanford.edu/~amitp/GameProgramming/path.cpp
                         push_heap( 
                             pending.begin(), 
@@ -475,7 +454,7 @@ namespace astar
         ++cfg.route_length;
         results.push_front(current.myNode);
 
-        while(current.has_parent(nodes.end())){
+        while(current.has_parent()){
             current = *current.myParent;
             results.push_front(current.myNode);
 
@@ -492,11 +471,11 @@ namespace astar
         clock_t elapsed2 = clock()-time;
         std::cout << "astar stats\n";
         std::cout << "ticks:\t\t" << elapsed2 << " (" << elapsed1 << ", " << elapsed2-elapsed1 << ")\n";
-        std::cout << "(seconds):\t" << (float)elapsed2/CLOCKS_PER_SEC << "\n";		
+        std::cout << "(seconds):\t" << (float)elapsed2/CLOCKS_PER_SEC << "\n";      
         std::cout << "route length:\t" << cfg.route_length << " nodes (" << cfg.route_cost << " units)\n";
         std::cout << "nodes examined:\t" << cfg.result_nodes_examined << "\n";
         std::cout << "nodes pending:\t" << cfg.result_nodes_pending << "\n";
-        std::cout << "(total):\t" << cfg.result_nodes_opened << "\n";	
+        std::cout << "(total):\t" << cfg.result_nodes_opened << "\n";   
         #endif
 
         return complete;

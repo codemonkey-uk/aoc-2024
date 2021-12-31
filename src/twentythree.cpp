@@ -9,82 +9,131 @@
 using namespace std;
 extern bool debug;
 
-const int map_h = 4;
+#define PART2
 
-// #define USE_SAMPLE
-
-// start TEST
-#ifndef USE_SAMPLE
-const char* start_str[map_h] = {
-//  "#############",
-    "#...........#",
-    "###B#D#C#A###",
-    "  #C#D#B#A#  ",
-    "  #########  "
-};
+#if defined(PART2)
+const int map_h = 6; // was 4 in part 1
 #else
-// start EXAMPLE
-const char* start_str[map_h] = {
-//  "#############"
-    "#...........#",
-    "###B#C#B#D###",
-    "  #A#D#C#A#  ",
-    "  #########  "
-};
+const int map_h = 4; // was 4 in part 1
 #endif
 
+const int max_y = map_h-2;
+
+const char* start_str[map_h] = {
+//  "###########",
+    "...........",
+    "##B#D#C#A##",
+#if defined(PART2)
+    " #D#C#B#A# ", // added in part2
+    " #D#B#A#C# ", // added in part2
+#endif 
+    " #C#D#B#A# ",
+    " ######### "
+//   01234567890
+};
+
 const char* goal_str[map_h] = {
-//  "#############",//-
-    "#...........#",//0
-    "###A#B#C#D###",//1
-    "  #A#B#C#D#  ",//2
-    "  #########  " //3
-//   01234567890AB
+//  "###########",//-
+    "...........",//0
+    "##A#B#C#D##",//1
+#if defined(PART2)    
+    " #A#B#C#D# ", // added in part2
+    " #A#B#C#D# ", // added in part2    
+#endif
+    " #A#B#C#D# ",//2
+    " ######### " //3
+//   01234567890
 };
 
 const char* blank_str[map_h] = {
-//  "#############",//-
-    "#...........#",//0
-    "###.#.#.#.###",//1
-    "  #.#.#.#.#  ",//2
-    "  #########  " //3
-//   01234567890AB
+//  "###########",//-
+    "...........",//0
+    "##.#.#.#.##",//1
+#if defined(PART2)    
+    " #.#.#.#.# ", // added in part2
+    " #.#.#.#.# ", // added in part2    
+#endif
+    " #.#.#.#.# ",//4 (2)
+    " ######### " //5 (3)
+//   01234567890
 };
 
-typedef Geometry::Vector2d<int> Vec;
-typedef Geometry::Vector2d<int> Pos;
+typedef Geometry::Vector2d<int8_t> Vec;
+typedef Geometry::Vector2d<int8_t> Pos;
 struct PuzzleState;
 
-bool IsRoomColumn(const Pos& pos)
+constexpr int X=0;
+constexpr int Y=1;
+
+bool IsRoomColumn(const Pos::BaseType& pos)
 {
-    return (pos.GetX()==3 || pos.GetX()==5 || pos.GetX()==7 || pos.GetX()==9);
+    return (pos[X]==2 || pos[X]==4 || pos[X]==6 || pos[X]==8);
+}
+
+int RoomIndex(int x)
+{
+    switch(x){
+        case 2: return 0;
+        case 4: return 1;
+        case 6: return 2;
+        case 8: return 3; 
+    }
+    return -1;
 }
 
 int TargetColumn(char type)
 {
     switch (type){
-        case 'A': return 3;
-        case 'B': return 5;
-        case 'C': return 7;
-        case 'D': return 9;
+        case 'A': return 2;
+        case 'B': return 4;
+        case 'C': return 6;
+        case 'D': return 8;
     }
     return -1;
 }
 
+bool MustMove(const Pos& pos) 
+{
+    return pos.GetY()==0 && IsRoomColumn(pos);
+}
 
 struct Amphipod
 {
     Pos pos{0,0};
     char type{0};
-    bool moving{false};
+    bool moving:1;
+    Amphipod():moving(false){};
     
     size_t hash() const {
-        size_t result = (pos.GetX()-1) + pos.GetY() * 11;
+        
+        // 
+        size_t what = 1+type-'A';//1,2,3,4 = 3 bits
+        int where = 0;
+        // in a room
+        if (pos.GetY()>0)
+        {
+            // position within the room
+            where += pos.GetY()-1; // 0,1,2,3 = 4 spots
+            where += RoomIndex(pos.GetX()) * 4;
+            // 3*4 = 12 + 3 = 15, 
+            // 15*3 = 45 bits
+        }
+        else
+        {
+            // some collisions but less then just X
+            where = 21 - pos.GetX();
+        }
+        
+        return what << where*3;
+        
+        /*
+        size_t result = pos.GetX() + pos.GetY() * 11;
         result <<= 3;
         result |= type-'A';
         result <<= 1;
         result |= moving;
         return result;
+        */
     }
     
     int StepCost() const
@@ -103,30 +152,16 @@ struct Amphipod
         return ::TargetColumn (type);
     }
     
-    int MinStepsToGoal(Pos p2) const
+    int MinStepsToGoal(Pos p2, const PuzzleState& p) const;
+    
+    int MinStepsToGoal(const PuzzleState& p) const
     {
-        // in the hallway, 
-        // distance to goal is distance to column + 1 step into it
-        if (p2.GetY()==0)
-            return abs(p2.GetX()-TargetColumn())+1;
-        // in the target room
-        if (p2.GetX()==TargetColumn()) 
-            return 0;
-        else 
-        // in the wrong room: move to hallway, move to column, move down 1
-            return p2.GetY() + abs(p2.GetX()-TargetColumn()) + 1;
+        return MinStepsToGoal(pos,p);
     }
     
-    int MinStepsToGoal() const
+    int CostToGoal(const PuzzleState& p) const
     {
-        return MinStepsToGoal(pos);
-    }
-    
-    // Pos Goal(const PuzzleState&);
-    
-    int CostToGoal() const
-    {
-        return MinStepsToGoal() * StepCost();
+        return MinStepsToGoal(p) * StepCost();
     }
     
     // Amphipods will never stop on the space immediately outside any room
@@ -137,7 +172,7 @@ struct Amphipod
     
     bool CanReachTargetColumn(const PuzzleState& p)const;
     
-    bool ValidMove(const PuzzleState& p, Vec move)const;
+    bool ValidMove(const PuzzleState& p, Vec::BaseType move)const;
     int CountMoves(const PuzzleState&)const;
     Pos GetMove(const PuzzleState& p, int i)const;
 };
@@ -150,7 +185,12 @@ struct PuzzleMove
 
 struct PuzzleState
 {
+#if defined(PART2)
+    static constexpr int NumPods=16;    // doubled to 16 in part 2
+#else
     static constexpr int NumPods=8;
+#endif
+
     Amphipod pods[NumPods];
     
     PuzzleState ApplyMove(const PuzzleMove& move) const
@@ -158,11 +198,6 @@ struct PuzzleState
         PuzzleState result(*this);
         
         assert( IsFree(move.dest) );
-        assert( astar::manhattan_distance(
-            result.pods[move.pod_index].pos[0],
-            result.pods[move.pod_index].pos[1],
-            move.dest[0],
-            move.dest[1])==1 );
         
         result.pods[move.pod_index].pos=move.dest;
 
@@ -181,7 +216,7 @@ struct PuzzleState
     {
         int result = 0;
         for (int i=0;i!=NumPods;++i)
-            result += pods[i].CostToGoal();
+            result += pods[i].CostToGoal(*this);
         return result;
     }
     
@@ -189,7 +224,10 @@ struct PuzzleState
     {
         int result = 0;
         for (int i=0;i!=NumPods;++i)
-            result += pods[i].MinStepsToGoal();
+        {
+            result += pods[i].MinStepsToGoal(*this);
+        }
+        
         return result;
     }
     
@@ -220,19 +258,20 @@ struct PuzzleState
         return total;
     };
     
-    bool IsFree(const Pos& pos)const
+    bool IsFree(const Pos::BaseType& pos)const
     {
+        // top & bottom of map
+        if (pos[1]<0) return false;
+        if (pos[1]>max_y) return false;
+        // sides of map
+        if (pos[0]<0 || pos[0]>=11) return false;
+        // rooms
+        if (pos[1]>=1 && !IsRoomColumn(pos)) return false;
+        // other pods
         for (int i=0;i!=NumPods;++i)
             if (pods[i].pos==pos) return false;
-        
-        if (pos.GetY()<0) return false;
-        if (pos.GetY()>2) return false;
-        
-        if (pos.GetY()==0)
-            return pos.GetX()>0 && pos.GetX()<12;
-        else if (pos.GetY()<=2)
-            return IsRoomColumn(pos);
-        return false;
+
+        return true;
     }
     
     bool IsRoomFree(char type) const
@@ -251,7 +290,7 @@ struct PuzzleState
         size_t result=0;
         for (int i=0;i!=NumPods;++i)
         {
-            result = result * 31 + pods[i].hash();
+            result = result | pods[i].hash();
         }
         return result;
     };
@@ -260,6 +299,7 @@ struct PuzzleState
 
         const PuzzleState* mFromState;
         int mI=0;
+        mutable PuzzleMove mCachedMove;
         
         iterator(const PuzzleState* current) : mFromState(current) {}
         iterator(const PuzzleState* current, int i ) : mFromState(current), mI(i) {}
@@ -272,13 +312,15 @@ struct PuzzleState
         PuzzleState operator*()const{return value();}
         
         PuzzleState value()const{
-            return mFromState->ApplyMove(
-                mFromState->GetMove(mI)
-            );
+            mCachedMove = mFromState->GetMove(mI);
+            return mFromState->ApplyMove(mCachedMove);
         }
         
         cost_type cost()const{
-             return mFromState->pods[mFromState->GetMove(mI).pod_index].StepCost();
+             return mFromState->pods[mCachedMove.pod_index].StepCost() * 
+                mFromState->pods[mCachedMove.pod_index].pos.ManhattanDistance(
+                    mCachedMove.dest
+                );
         }
     
         iterator& operator++(){mI++;return*this;}
@@ -308,6 +350,31 @@ struct PuzzleState
     }
 };
 
+int Amphipod::MinStepsToGoal(Pos p2, const PuzzleState& p) const
+{
+    // distance to goal is distance to column 
+    int steps = abs(p2.GetX()-TargetColumn());
+
+    // in the wrong room: add move to hallway distance & 1 step
+    if (p2.GetX()!=TargetColumn())
+    {
+        steps += p2.GetY() + 1;
+    }
+    else 
+    {
+        // once in the target room
+        // need to fill gaps downwards
+        while (p2.GetY()<max_y) 
+        {
+            p2.SetY( p2.GetY()+1 );
+            if (p.GetChar(p2)!=type) steps++;
+        }
+    }
+    
+    // cout << type << " - " << steps << endl;
+    return steps;
+}
+    
 bool Amphipod::CanReachTargetColumn(const PuzzleState& p)const
 {
     assert( pos.GetY()==0 );
@@ -319,33 +386,28 @@ bool Amphipod::CanReachTargetColumn(const PuzzleState& p)const
     Pos p2=pos;
     while (p2.GetX()!=tx)
     {
-        p2 += {dx,0};
+        p2 += Vec(dx,0);
         if (!p.IsFree(p2)) return false;
     }
     
     return true;
 }
 
-bool Amphipod::ValidMove(const PuzzleState& p, Vec move)const
+bool Amphipod::ValidMove(const PuzzleState& p, Vec::BaseType dest)const
 {
-    Pos dest = pos;
-    dest += move;
- 
-     assert(astar::manhattan_distance(pos[0],pos[1],dest[0],dest[1]));
-     
     // Once an amphipod stops moving in the hallway, 
     // it will stay in that spot until it can move into a room.
-    if (!moving && pos.GetY()==0)
+    if (!moving && pos[Y]==0)
     {
         if (!CanReachTargetColumn(p)) return false;
         if (p.IsRoomFree(type)==false) return false;
     }
 
     // move from hallway into room
-    if (pos.GetY()==0 && dest.GetY()==1)
+    if (pos[Y]==0 && dest[Y]>=1)
     {
         // only move into your own room
-        if (TargetColumn()!=dest.GetX()) return false;
+        if (TargetColumn()!=dest[X]) return false;
         if (p.IsRoomFree(type)==false) return false;
     }
     
@@ -362,8 +424,26 @@ int Amphipod::CountMoves(const PuzzleState& p)const
     int total = 0;
     for(Vec m:moves)
     {
-        if (ValidMove(p,m))
-            total++;
+        Pos dest(pos);
+        while (ValidMove(p,dest+=m))
+        {
+            if (::MustMove(dest))
+            {
+                for(Vec m2:moves)
+                {
+                    if (m2!=-m)
+                    {
+                        Pos dest2(dest);
+                        while (ValidMove(p,dest2+=m2))
+                            total++;
+                    }
+                }
+            }
+            else
+            {
+                total++;
+            }
+        }
     }
     return total;
 }
@@ -372,13 +452,34 @@ Pos Amphipod::GetMove(const PuzzleState& p, int i)const
 {
     for(Vec m:moves)
     {
-        if (ValidMove(p,m))
+        Pos dest(pos);
+        while (ValidMove(p,dest+=m))
         {
-            if (i==0)
-                return Pos(pos+m);
-            --i;
+            if (::MustMove(dest))
+            {
+                for(Vec m2:moves)
+                {
+                    if (m2!=-m)
+                    {
+                        Pos dest2(dest);
+                        while (ValidMove(p,dest2+=m2))
+                        {
+                            if (i==0)
+                                return dest2;
+                            --i;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (i==0)
+                    return dest;
+                --i;
+            }
         }
     }
+    
     assert(false);
     return Pos{0,0};
 }
@@ -403,11 +504,11 @@ char PuzzleState::GetChar(Pos p) const
 void PuzzleState::Print() const
 {
     cout << "hash: " << hash() << endl;
-    cout << "#############" << endl;
+    cout << "###########" << endl;
     for (int y=0;y!=map_h;++y)
     {
         char c;
-        for (int x=0;(c=GetChar({x,y}));++x)
+        for (int x=0;(c=GetChar(Vec(x,y)));++x)
         {
             cout << c;
         }
@@ -433,6 +534,7 @@ PuzzleState ReadPuzzle(const char** puzzle_str)
             }
         }
     }
+    
     assert(count==PuzzleState::NumPods);
     sort(&result.pods[0],&result.pods[count],
         [](const auto& a, const auto& b){
@@ -456,6 +558,25 @@ void SelfTest()
     PuzzleState b = ReadPuzzle(goal_str);
     assert(a.Finished()==false);
     assert(b.Finished()==true);
+
+#if !defined(PART2)
+    const char * three_moves_left[] = {
+    "...A.......",
+    "##A#B#C#D##",
+    " #.#B#C#D# ",
+    " ######### "};
+    PuzzleState c = ReadPuzzle(three_moves_left);
+    assert(c.MinStepsToGoal()<=3);
+    
+    const char * five_moves_left[] = {
+    ".A.A.......",
+    "##.#B#C#D##",
+    " #.#B#C#D# ",
+    " ######### "};
+    PuzzleState d = ReadPuzzle(five_moves_left);
+    assert(d.MinStepsToGoal()<=5);
+#endif
+
 };
 
 void ReportProgress(const PuzzleState& puzzle)
@@ -464,16 +585,6 @@ void ReportProgress(const PuzzleState& puzzle)
     cout << "At least " << puzzle.MinStepsToGoal() << " moves to go." << endl;
     cout << "Minimum energy cost " << puzzle.CostToGoal() << "." << endl;
     cout << puzzle.CountMoves() << " possible moves." << endl;
-
-    if (puzzle.hash()==86284223)
-    {
-        cout << "--- MOVES: " << endl;
-        for (auto m:puzzle)
-        {
-            m.Print();
-        }
-        cout << "--- (end)" << endl;
-    }
 }
 
 struct astar_behaviour
@@ -503,7 +614,13 @@ void TwentyThree()
     SelfTest();
     PuzzleState puzzle = ReadPuzzle(start_str);
     PuzzleState end = ReadPuzzle(goal_str);
-    
+
+#if defined(PART2)    
+    cout << "-- PART 2 --" << endl;
+#else
+    cout << "-- PART 1 --" << endl;
+#endif
+
     cout << "-- FROM --" << endl;
     ReportProgress(puzzle);
     cout << "-- TO --" << endl;
@@ -536,6 +653,18 @@ void TwentyThree()
             }
             cout << "Total moves: " << results.size() << endl;
             cout << "Total cost: " << cfg.route_cost << endl;
+
+            // expected part 1 cost = 15322
+            // 284.44s user
+            cout << "Nodes opened: " << cfg.result_nodes_opened << endl;
         }
-    }    
+        else
+        {
+            cout << "No solution found!" << endl;
+            cout << "Nodes opened: " << cfg.result_nodes_opened << endl;
+            cout << "Nodes pending: " << cfg.result_nodes_pending << endl;
+            cout << "Best found: " << endl;
+            ReportProgress(results.back());
+        }
+    }
 }
