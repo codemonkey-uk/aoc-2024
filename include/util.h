@@ -33,6 +33,17 @@ inline std::vector< std::string > Split( const std::string& in, char c )
     return Split(in, [c](char c2){return c==c2;});
 }
 
+inline std::string Join( const std::vector< std::string >& in, char c=' ')
+{
+    std::string result;
+    for( const auto& s : in)
+    {
+        if (!result.empty()) result += c;
+        result += s;
+    }
+    return result;
+}
+
 template< typename pred >
 std::vector< std::string > Filter( std::vector< std::string > data, pred fn )
 {

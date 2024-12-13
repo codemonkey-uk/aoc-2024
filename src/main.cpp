@@ -2,9 +2,11 @@
 
 bool debug=true;
 
-void One_A();
+void One();
+void Two();
 
 int main(int, char**)
 {
-	One_A();
+	// One();
+	Two();
 }

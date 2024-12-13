@@ -3,7 +3,7 @@
 
 using namespace std;
 
-void One_A()
+void One()
 {
     int ia,ib;
     vector<int> a,b;
@@ -41,27 +41,4 @@ void One_A()
     }
     cout << "1) " << t << endl;
     cout << "2) " << t2 << endl;
-
-}
-
-void One_B()
-{
-    int a=0;
-    std::vector<int> data;
-    data.reserve( 2048 );
-
-    while(cin>>a)
-    {
-        data.push_back(a);
-    }
-
-    int c = 0;
-    for (size_t i = 3;i<data.size();++i)
-    {
-        int ps = data[i-1] + data[i-2] + data[i-3];        
-        int is = data[i-0] + data[i-1] + data[i-2];        
-        if (is>ps)
-            c++;
-    }
-    cout << c << endl;
 }
