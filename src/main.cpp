@@ -7,6 +7,7 @@ void Two();
 void Three();
 void Four();
 void Five();
+void Six();
 
 int main(int, char**)
 {
@@ -17,5 +18,6 @@ int main(int, char**)
 	// Three();
 
 	// Four();
-	Five();
+	// Five();
+	Six();
 }
