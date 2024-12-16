@@ -59,6 +59,38 @@ size_t CountAllMatches(const string& word, const vector<string>& in)
     return total;
 }
 
+// PART 2
+
+bool XMatch(char c)
+{
+    return c=='M' || c=='S';
+}
+
+bool XMatch(char a, char b)
+{
+    return a!=b && XMatch(a) && XMatch(b);
+}
+
+size_t CountXs(const vector<string>& in)
+{
+    int total = 0;
+    for (size_t row=1;row!=in.size()-1;row++)
+    {
+        for (size_t column=1;column!=in.size()-1;column++)
+        {
+            // center of X is an A
+            if (in[row][column]=='A')
+            {
+                bool tlbr = XMatch(in[row-1][column-1], in[row+1][column+1]);
+                bool trbl = XMatch(in[row-1][column+1], in[row+1][column-1]);
+                if (tlbr && trbl) total++;
+            }
+        }
+    }
+
+    return total;
+}
+
 void Four()
 {   
     vector<string> grid;
@@ -71,5 +103,6 @@ void Four()
 
 
     cout << "P1: " << CountAllMatches("XMAS", grid) << endl;
+    cout << "P2: " << CountXs(grid) << endl;
 }
 

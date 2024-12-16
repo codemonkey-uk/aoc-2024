@@ -6,6 +6,7 @@ void One();
 void Two();
 void Three();
 void Four();
+void Five();
 
 int main(int, char**)
 {
@@ -15,5 +16,6 @@ int main(int, char**)
 	// doesnt work
 	// Three();
 
-	Four();
+	// Four();
+	Five();
 }
