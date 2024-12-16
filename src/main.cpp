@@ -4,9 +4,16 @@ bool debug=true;
 
 void One();
 void Two();
+void Three();
+void Four();
 
 int main(int, char**)
 {
 	// One();
-	Two();
+	// Two();
+
+	// doesnt work
+	// Three();
+
+	Four();
 }
