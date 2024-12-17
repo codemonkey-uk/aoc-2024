@@ -38,7 +38,35 @@ pair<Antenna,Antenna> Antinode(Antenna a, Antenna b)
 
 bool InBounds(Antenna a, int width, int height)
 {
-    return a.row >= 0 && a.row < height && a.col >= 0 && a.row < width;
+    return a.row >= 0 && a.row < height && a.col >= 0 && a.col < width;
+}
+
+void InsertAllAntinode(Antenna a, Antenna b, set<Antenna>& intoSet, int width, int height)
+{
+    int abr = b.row - a.row;
+    int abc = b.col - a.col;
+
+    Antenna result;
+    
+    intoSet.insert(a);
+    result.row = a.row - abr;
+    result.col = a.col - abc;
+    while(InBounds(result, width, height))
+    {
+        intoSet.insert(result);
+        result.row -= abr;
+        result.col -= abc;
+    }
+
+    intoSet.insert(b);
+    result.row = b.row + abr;
+    result.col = b.col + abc;
+    while(InBounds(result, width, height))
+    {
+        intoSet.insert(result);
+        result.row += abr;
+        result.col += abc;
+    }    
 }
 
 void Eight()
@@ -66,7 +94,7 @@ void Eight()
     int height = row;
     cout << width << " x " << height << endl;
 
-    set< Antenna > antinodes;
+    set< Antenna > antinodes, p2antinodes;
 
     for (auto kvp : map)
     {
@@ -77,6 +105,7 @@ void Eight()
         {
             for (int b=a+1;b<kvp.second.size();++b)
             {
+                // P1
                 auto anti = Antinode(kvp.second[a], kvp.second[b]);
 
                 cout << '\t' << anti.first.col << "," << anti.first.row << " & ";
@@ -86,10 +115,14 @@ void Eight()
                     antinodes.insert(anti.first);
                 if (InBounds(anti.second, width, height))
                     antinodes.insert(anti.second);
+
+                // P2
+                InsertAllAntinode(kvp.second[a], kvp.second[b], p2antinodes, width, height);
             }    
         }
     }
 
+/*
     int total = 0;
     for (int row=0;row!=width;++row)
     {        
@@ -101,11 +134,8 @@ void Eight()
         }
         cout << endl;
     }
+*/
 
-    
-    // 305 - correct
-    cout << "P1: " << total << endl;
-    
-    // 329 - too high -- why???
-    // cout << "P1: " << antinodes.size() << endl;
+    cout << "P1: " << antinodes.size() << endl;
+    cout << "P2: " << p2antinodes.size() << endl;    
 }
