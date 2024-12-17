@@ -69,6 +69,53 @@ void Defrag(vector<int>& memory)
     }
 }
 
+void Defrag_V2(vector<int>& memory)
+{
+    auto fileEnd = find_if(memory.rbegin(), memory.rend(), [](int i) { return i!=-1; });
+    if (fileEnd==memory.rend()) return;
+    int id=*fileEnd;
+
+    while (id>0)
+    {
+        auto nextFree = find(memory.begin(), memory.end(), -1);
+        auto fileBegin = find_if(fileEnd+1, memory.rend(), [id](int i) { return i!=id; });
+        int fileLen = distance(fileEnd, fileBegin);
+        //cout << id << " = " << fileLen << endl;
+        if (fileLen>0)
+        {
+            auto freeEnd = find_if(nextFree, memory.end(), [](int i) { return i!=-1; });
+            int freeSpace = distance(nextFree, freeEnd);
+            //cout << " free " << freeSpace << endl;
+            while(freeSpace<fileLen && nextFree!=memory.end())
+            {
+                nextFree = find(freeEnd, memory.end(), -1);
+                freeEnd = find_if(nextFree, memory.end(), [](int i) { return i!=-1; });
+                freeSpace = distance(nextFree, freeEnd);
+                //cout << " free " << freeSpace << endl;
+            }
+            if(freeSpace>=fileLen)
+            {
+                if (nextFree<fileEnd.base())
+                {
+                    do
+                    {
+                        //swap(*fileBegin, *nextFree);
+                        *fileEnd = -1;
+                        *nextFree = id;
+                        fileEnd++;
+                        nextFree++;
+                    }while(fileEnd!=fileBegin);
+                }
+            }
+        }
+        
+        //DebugPrint(memory);
+        id--;
+        
+        fileEnd = find_if(memory.rbegin(), memory.rend(), [id](int i) { return i==id; });
+    }
+}
+
 size_t Checksum(const vector<int>& memory)
 {
     size_t total=0;
@@ -86,8 +133,14 @@ void Nine()
     {
         string dense = line;
         auto map = Expand(dense);
+        
         Defrag(map);
-        cout << Checksum(map) << endl;
+        cout << "P1: " << Checksum(map) << endl;
+
+        map = Expand(dense);
+        Defrag_V2(map);
+        cout << "P2: " << Checksum(map) << endl;
+
     }
 
     cout << endl;
