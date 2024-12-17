@@ -93,6 +93,54 @@ int Count(const vector< string >& grid)
     return result;
 }
 
+int FindLoops(
+    const vector< string >& og,
+    const vector< string >& part1result, int steps, int candidates)
+{
+    int result=0;
+    int checked=0;
+    vector< string > resultg = og;
+
+    for (size_t row=0;row!=og.size();row++)
+    {
+        for (size_t col=0;col!=og[row].size();++col)
+        {
+            char c1 = og[row][col];
+            char c2 = part1result[row][col];
+
+            // if its on the path, and not the original guard start location
+            if (c2=='X' && !IsGuard(c1))
+            {
+                vector< string > test = og;
+                test[row][col] = '#';
+
+                int newSteps = 0;
+                while (Step(test))
+                {
+                    //for (const auto& line : grid)
+                    //    cout << line << endl;
+                    //cout << endl;
+                    newSteps++;
+                    if (newSteps > 2*steps)
+                    {
+                        resultg[row][col] = 'O';
+                        result++;
+                        break;
+                    }
+                }
+                checked++;
+                cout << checked << "/" << candidates << " checked." << endl;
+            }
+        }
+    }
+
+    for (const auto& line : resultg)
+        cout << line << endl;
+    cout << endl;
+
+    return result;
+}
+
 void Six()
 {   
     vector< string > grid;
@@ -103,22 +151,30 @@ void Six()
         grid.push_back(line);  
     }
 
-    for (const auto& line : grid)
-        cout << line << endl;
-    cout << endl;
+    vector< string > og = grid;
 
+    //for (const auto& line : grid)
+    //    cout << line << endl;
+    //cout << endl;
+
+    int steps = 0;
     while (Step(grid))
     {
-        for (const auto& line : grid)
-            cout << line << endl;
-        cout << endl;
+        //for (const auto& line : grid)
+        //    cout << line << endl;
+        //cout << endl;
+        steps++;
     }
 
-    for (const auto& line : grid)
-        cout << line << endl;
-    cout << endl;
+    cout << "Path ends after " << steps << " steps." << endl;
+    //for (const auto& line : grid)
+    //    cout << line << endl;
+    //cout << endl;
 
-    cout << "P1: " << Count(grid) << endl;
-    //cout << "P2: " << fixedTotal << endl;
+    const int p1 = Count(grid);
+    const int candidates = FindLoops(og, grid, steps, p1);
+
+    cout << "P1: " << p1 << endl;
+    cout << "P2: " << candidates << endl;
 }
 

@@ -8,16 +8,26 @@ void Three();
 void Four();
 void Five();
 void Six();
+void Seven();
+void Eight();
 
 int main(int, char**)
 {
 	// One();
 	// Two();
 
-	// doesnt work
+	// doesnt work (part 1)
 	// Three();
 
 	// Four();
 	// Five();
-	Six();
+	
+	// works, but is slow
+	// Six();
+
+	// doesnt work (part 1)
+	// Seven();
+
+	Eight();
+
 }
