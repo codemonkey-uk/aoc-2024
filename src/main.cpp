@@ -10,7 +10,7 @@ void Five();
 void Six();
 void Seven();
 void Eight();
-
+void Nine();
 int main(int, char**)
 {
 	// One();
@@ -28,6 +28,6 @@ int main(int, char**)
 	// doesnt work (part 1)
 	// Seven();
 
-	Eight();
-
+	//Eight();
+	Nine();
 }
