@@ -11,6 +11,8 @@ void Six();
 void Seven();
 void Eight();
 void Nine();
+void Ten();
+
 int main(int, char**)
 {
 	// One();
@@ -29,5 +31,6 @@ int main(int, char**)
 	// Seven();
 
 	//Eight();
-	Nine();
+	//Nine();
+	Ten();
 }
