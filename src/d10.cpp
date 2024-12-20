@@ -28,6 +28,7 @@ void DebugPrint(const Topo& map)
 struct Pos 
 {
     int col; int row;
+    bool operator<(const Pos& rhs)const{return col<rhs.col || (col==rhs.col && row<rhs.row);}
 };
 
 vector<Pos> FindTrailHeads(const Topo& map)
@@ -59,13 +60,17 @@ bool Valid(const Topo& map, Pos a, Pos b)
 void FindPeaks(const Topo& map, Visited& visited, Pos p, vector<Pos>& results)
 {
     // do not revisit
-    if (visited.get(p.col,p.row)) return;
+    if (visited.get(p.col,p.row)) 
+    {
+        return;
+    }
     visited.get(p.col,p.row) = 1;
 
     // found a peak
     if (map.get(p.col,p.row) == 9)
     {
         results.push_back(p);
+        visited.get(p.col,p.row) = 0;
         return;
     }
     
@@ -87,6 +92,8 @@ void FindPeaks(const Topo& map, Visited& visited, Pos p, vector<Pos>& results)
     next.row=p.row;
     next.col=p.col - 1;
     if (Valid(map,p,next)) FindPeaks(map,visited,next,results);
+
+    visited.get(p.col,p.row) = 0;
 }
 
 vector<Pos> FindPeaks(const Topo& map, Pos p)
@@ -122,16 +129,20 @@ void Ten()
     vector<Pos> trailHeads = FindTrailHeads(map);
     cout << trailHeads.size() << " trail head(s) found." << endl;
 
+    size_t p1Sum = 0;
     size_t sum = 0;
     for (int head = 0;head!=trailHeads.size();head++)
     {
         auto peaks = FindPeaks(map,trailHeads[head]);
         cout << peaks.size() << " reachable peaks found." << endl;
         sum += peaks.size();
+        
+        set<Pos> unique(peaks.begin(),peaks.end());
+        p1Sum += unique.size();
     }
 
     //Visited visits(line.size(), line.size());
     //DebugPrint(visits);
-
-    cout << "P1 total: " << sum << endl;
+    cout << "P1 total: " << p1Sum << endl;
+    cout << "P2 total: " << sum << endl;
 }
