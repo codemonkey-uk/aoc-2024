@@ -81,6 +81,12 @@ class Solution
 
     struct iterator 
     {
+        using value_type = std::pair<BigInt, BigInt>;
+        using difference_type = std::ptrdiff_t;
+        using pointer = value_type*;
+        using reference = value_type&;
+        using iterator_category = std::forward_iterator_tag;
+
         iterator(const Solution* s_, BigInt i_) : s(s_), i(i_) {}
         pair<BigInt,BigInt> operator*() const { return (*s)[i]; }
         iterator& operator++() { i++; return *this; }
@@ -89,6 +95,7 @@ class Solution
         bool operator!=(const iterator& other) const { return i != other.i; }
         const Solution* s;
         BigInt i;
+        
     };
 
     iterator begin() const { return iterator(this, k_min); }
@@ -116,6 +123,11 @@ private:
 
 };
 
+// Define the comparison operator for std::pair<BigInt, BigInt>
+bool operator<(const std::pair<BigInt, BigInt>& lhs, const std::pair<BigInt, BigInt>& rhs) {
+    return lhs.first < rhs.first || (lhs.first == rhs.first && lhs.second < rhs.second);
+}   
+
 // returns ma,mb when solving ma*a + mb*b == t
 Solution Solve(BigInt a, BigInt b, BigInt t)
 {   
@@ -134,7 +146,7 @@ BigInt Solve(Machine m)
     auto ysolutions = Solve(m.a.dy, m.b.dy, m.prize.y);
 
     cout << xsolutions.size() << " solutions for x: " << endl;
-    if (verbose)
+    if (verbose && !part2)
     {
         for (auto x: xsolutions)
         {
@@ -146,7 +158,7 @@ BigInt Solve(Machine m)
     }
     
     cout << ysolutions.size() << " solutions for y: " << endl;
-    if (verbose)
+    if (verbose && !part2)
     {
         for (auto y: ysolutions)
         {
@@ -157,31 +169,36 @@ BigInt Solve(Machine m)
         }
     }
     
-
-    BigInt tokens=INT_MAX;
-    pair<BigInt,BigInt> bestSolution;
-
-    // find the intersection of the two sets of solutions  
-    for (auto x : xsolutions)
+    if (xsolutions.size() && ysolutions.size())
     {
-        for (auto y : ysolutions)
+        if (verbose) cout << "looking for " << (*ysolutions.begin()).first << " " << (*ysolutions.begin()).second << " in xsolutions" << endl;
+        auto yitr = lower_bound(ysolutions.begin(), ysolutions.end(), *xsolutions.begin());
+        auto xitr = lower_bound(xsolutions.begin(), xsolutions.end(), *ysolutions.begin());
+        for (;xitr!=xsolutions.end();)
         {
+            auto x = *xitr;
+
+            if (verbose) cout << "looking for " << x.first << " " << x.second << " in ysolutions" << endl;
+            yitr = lower_bound(yitr, ysolutions.end(), x);
+
+            if (yitr==ysolutions.end()) break;
+
+            auto y = *yitr;
             if (x.first == y.first && x.second == y.second)
             {
                 BigInt cost = x.first*3 + x.second*1;
-                if (cost < tokens)
-                {
-                    tokens = cost;
-                    bestSolution = x;
-
-                    cout << "Solution: " << x.first << " " << x.second << " cost " << tokens << endl;
-                }
+                // because solitions are in sorted order, assending, we can break here
+                cout << "Solution: " << x.first << " " << x.second << " cost " << cost << endl;
+                return cost;
             }
-            else if (x.first < y.first) break;
+            
+            if (verbose) cout << "looking for " << y.first << " " << y.second << " in xsolutions" << endl;
+            xitr = lower_bound(xitr, xsolutions.end(), y);
         }
     }
-
-    return tokens;
+    
+    cout << "No solution found." << endl;
+    return INT_MAX;
 }
 
 void Thirteen()
