@@ -83,19 +83,19 @@ void Eleven()
 
     //cout << Split(1000).first << ":" <<Split(1000).second<< endl;
 
-    for (int blink=1; blink<=75; blink++)
+    int blink=1;
+    for (; blink<=75; blink++)
     {
         m = Blink(m);
-
-        BigInt sum = 0;
-        for (auto p : m)
-        {
-            sum += p.second;
-        }
-
-        cout << "after " << blink << ", " << sum << " stones " << endl;
     }
 
+    BigInt sum = 0;
+    for (auto p : m)
+    {
+        sum += p.second;
+    }
+
+    cout << "after " << blink << ", " << sum << " stones " << endl;
 
     // 192238 is to high
     // 198097 is to high
