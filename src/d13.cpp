@@ -4,16 +4,21 @@
 
 using namespace std;
 
+typedef int64_t BigInt;
+
+bool verbose=false;
+bool part2=true;
+
 struct Prize
 {
-    int x;
-    int y;
+    BigInt x;
+    BigInt y;
 };
 
 struct Button
 {
-    int dx;
-    int dy;
+    BigInt dx;
+    BigInt dy;
 };
 
 struct Machine
@@ -23,11 +28,11 @@ struct Machine
     Prize prize;
 };
 
-int GreatestCommonDivisor(int a, int b)
+BigInt GreatestCommonDivisor(BigInt a, BigInt b)
 {
     while (b != 0)
     {
-        int t = b;
+        BigInt t = b;
         b = a % b;
         a = t;
     }
@@ -36,12 +41,12 @@ int GreatestCommonDivisor(int a, int b)
 
 struct ExtendedEuclideanResult
 {
-    int gcd;
-    int x;
-    int y;
+    BigInt gcd;
+    BigInt x;
+    BigInt y;
 };
 
-ExtendedEuclideanResult ExtendedEuclidean(int a, int b)
+ExtendedEuclideanResult ExtendedEuclidean(BigInt a, BigInt b)
 {
     if (b == 0)
     {
@@ -52,38 +57,74 @@ ExtendedEuclideanResult ExtendedEuclidean(int a, int b)
     return {r.gcd, r.y, r.x - (a / b) * r.y};
 }
 
-// returns ma,mb when solving ma*a + mb*b == t
-vector< pair<int,int> > Solve(int a, int b, int t)
+class Solution
 {
-    ExtendedEuclideanResult r = ExtendedEuclidean(a, b);
-    if (t % r.gcd != 0)
+    public:
+    Solution(BigInt a_, BigInt b_, BigInt t)
+    : a(a_), b(b_)  
     {
-        return {};
+        r = ExtendedEuclidean(a, b);
+        if (t % r.gcd != 0)
+        {
+            k_min = k_max = 0;
+            return;
+        }
+
+        BigInt scale = t / r.gcd;
+        ma = r.x * scale;
+        mb = r.y * scale;
+
+        // Calculate the range 
+        k_min = std::ceil(-static_cast<double>(ma * r.gcd) / b);
+        k_max = std::floor(static_cast<double>(mb * r.gcd) / a);        
     }
 
-    int scale = t / r.gcd;
-    int ma = r.x * scale;
-    int mb = r.y * scale;
-    vector< pair<int,int> > result;
-
-    // Calculate the range of k
-    int k_min = std::ceil(-static_cast<double>(ma * r.gcd) / b);
-    int k_max = std::floor(static_cast<double>(mb * r.gcd) / a);
-
-    for (int i = k_min; i <= k_max; i++)
+    struct iterator 
     {
-        result.push_back({
-            ma + i * (b / r.gcd), 
-            mb - i * (a / r.gcd)
-        });
+        iterator(const Solution* s_, BigInt i_) : s(s_), i(i_) {}
+        pair<BigInt,BigInt> operator*() const { return (*s)[i]; }
+        iterator& operator++() { i++; return *this; }
+        iterator operator++(int) { iterator copy(*this); i++; return copy; }
+        bool operator==(const iterator& other) const { return i == other.i; }
+        bool operator!=(const iterator& other) const { return i != other.i; }
+        const Solution* s;
+        BigInt i;
+    };
+
+    iterator begin() const { return iterator(this, k_min); }
+    iterator end() const { return iterator(this, k_min+size()); }
+
+    size_t size() const
+    {
+        return k_max - k_min + 1;
     }
-    
-    return result;
+
+    pair<BigInt,BigInt> operator[](size_t i) const
+    {
+        return {ma + i * (b / r.gcd), 
+                mb - i * (a / r.gcd)};
+    }
+
+private:
+    BigInt a;
+    BigInt b;
+    ExtendedEuclideanResult r;
+    BigInt ma;
+    BigInt mb;
+    BigInt k_min;
+    BigInt k_max;        
+
+};
+
+// returns ma,mb when solving ma*a + mb*b == t
+Solution Solve(BigInt a, BigInt b, BigInt t)
+{   
+    return Solution(a, b, t);
 }
 
-int Solve(Machine m)
+BigInt Solve(Machine m)
 {
-    static int N=0;
+    static BigInt N=0;
     cout << "-- Machine " << N++ << " --" << endl;
     cout << "Button A: X+" << m.a.dx << " Y+" << m.a.dy << endl;
     cout << "Button B: X+" << m.b.dx << " Y+" << m.b.dy << endl;
@@ -93,26 +134,32 @@ int Solve(Machine m)
     auto ysolutions = Solve(m.a.dy, m.b.dy, m.prize.y);
 
     cout << xsolutions.size() << " solutions for x: " << endl;
-    for (auto x: xsolutions)
+    if (verbose)
     {
-        cout << " " << x.first << " x " << m.a.dx << " + ";
-        cout << " " << x.second << " x " << m.b.dx << " = ";
-        cout << " " << x.first * m.a.dx + x.second * m.b.dx;
-        cout << " = " << m.prize.x << endl;
+        for (auto x: xsolutions)
+        {
+            cout << " " << x.first << " x " << m.a.dx << " + ";
+            cout << " " << x.second << " x " << m.b.dx << " = ";
+            cout << " " << x.first * m.a.dx + x.second * m.b.dx;
+            cout << " = " << m.prize.x << endl;
+        }
     }
+    
     cout << ysolutions.size() << " solutions for y: " << endl;
-    for (auto y: ysolutions)
+    if (verbose)
     {
-        cout << " " << y.first << " x " << m.a.dy << " + ";
-        cout << " " << y.second << " x " << m.b.dy << " = ";
-        cout << " " << y.first * m.a.dy + y.second * m.b.dy;
-        cout << " = " << m.prize.y << endl;
+        for (auto y: ysolutions)
+        {
+            cout << " " << y.first << " x " << m.a.dy << " + ";
+            cout << " " << y.second << " x " << m.b.dy << " = ";
+            cout << " " << y.first * m.a.dy + y.second * m.b.dy;
+            cout << " = " << m.prize.y << endl;
+        }
     }
+    
 
-    vector< pair<int,int> > solutions;
-
-    int tokens=INT_MAX;
-    pair<int,int> bestSolution;
+    BigInt tokens=INT_MAX;
+    pair<BigInt,BigInt> bestSolution;
 
     // find the intersection of the two sets of solutions  
     for (auto x : xsolutions)
@@ -121,9 +168,7 @@ int Solve(Machine m)
         {
             if (x.first == y.first && x.second == y.second)
             {
-                solutions.push_back(x);
-                
-                int cost = x.first*3 + x.second*1;
+                BigInt cost = x.first*3 + x.second*1;
                 if (cost < tokens)
                 {
                     tokens = cost;
@@ -132,6 +177,7 @@ int Solve(Machine m)
                     cout << "Solution: " << x.first << " " << x.second << " cost " << tokens << endl;
                 }
             }
+            else if (x.first < y.first) break;
         }
     }
 
@@ -168,27 +214,53 @@ void Thirteen()
         // skip blanks
         if (line.empty()) getline(cin, line);
 
+        int x, y;
         Machine m;
-        sscanf(line.c_str(), "Button A: X+%d, Y+%d", &m.a.dx, &m.a.dy);
+
+        sscanf(line.c_str(), "Button A: X+%d, Y+%d", &x, &y);
+        m.a.dx=x;
+        m.a.dy=y;
         
         getline(cin, line);
-        sscanf(line.c_str(), "Button B: X+%d, Y+%d", &m.b.dx, &m.b.dy);
+        sscanf(line.c_str(), "Button B: X+%d, Y+%d", &x, &y);
+        m.b.dx=x;
+        m.b.dy=y;        
         
         getline(cin, line);
-        sscanf(line.c_str(), "Prize: X=%d, Y=%d", &m.prize.x, &m.prize.y);
+        sscanf(line.c_str(), "Prize: X=%d, Y=%d", &x, &y);
+        m.prize.x=x;
+        m.prize.y=y;        
 
         machines.push_back(m);
     }
     cout << machines.size() << " machines to solve." << endl;
 
-    int sum=0;
+    BigInt sum=0;
     for (auto m : machines)
     {
-        int cost = Solve(m);
+        BigInt cost = Solve(m);
         if (cost != INT_MAX)
         {
             sum += cost;
         }
     }
     cout << "P1: " << sum << endl;
+
+    // Part 2
+    if (part2)
+    {
+        sum=0;
+        for (auto m : machines)
+        {
+            m.prize.x += 10000000000000;
+            m.prize.y += 10000000000000;
+
+            BigInt cost = Solve(m);
+            if (cost != INT_MAX)
+            {
+                sum += cost;
+            }
+        }
+        cout << "P2: " << sum << endl;
+    }   
 }
