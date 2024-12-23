@@ -7,12 +7,6 @@ using namespace std;
 
 typedef int64_t BigInt;
 
-struct Pos
-{
-    int col;
-    int row;
-};
-
 typedef Pos Velocity;
 typedef Pos Bounds;
 
