@@ -47,18 +47,17 @@ BigInt AllGPS(const vector<string>& map)
     {
         for (int col=0;col!=map[row].size();col++)
         {
-            if (map[row][col] == 'O') total += GPS({col,row});
+            auto c = map[row][col];
+            if (c == 'O' || c=='[') total += GPS({col,row});
         }
     }
     return total;
 }
 
-Bot Move(vector<string>& map, const Bot& bot, char m)
+Bot Move(vector<string>& map, const Bot& bot, char m, bool commitMove=true)
 {
     Dir d = Direction(m);
-    Pos next = bot+d;
-
-    char from = map[bot.row][bot.col];
+    const Pos next = bot+d;
 
     // dont go off edge
     if (bot.row < 0 || bot.row >= map.size() || bot.col < 0 || bot.col >= map[0].size())
@@ -66,26 +65,84 @@ Bot Move(vector<string>& map, const Bot& bot, char m)
         return bot;
     }
 
+    const char from = map[bot.row][bot.col];
+    const char too = map[next.row][next.col];    
+
     // blocked by a wall
-    if (map[next.row][next.col] == '#')
+    if (too == '#')
     {
         return bot;
     }
 
-    if (map[next.row][next.col] == '.')
+    if (too == '.')
     {
-        map[bot.row][bot.col] = '.';
-        map[next.row][next.col] = from;
+        if (commitMove)
+        {
+            map[bot.row][bot.col] = '.';
+            map[next.row][next.col] = from;
+        }
         return next;
     }
 
-    if (map[next.row][next.col] == 'O')
+    if (too == '[' || too == ']')
+    {
+        // moves left or right work same as with O
+        if (m=='>' || m=='<')
+        {
+            // move "next" (a wall) out the way recusivly
+            if (Move(map, next, m)!=next)
+            {
+                if (commitMove)
+                {
+                    map[bot.row][bot.col] = '.';
+                    map[next.row][next.col] = from;
+                }
+                return next;
+            }
+            else
+            {
+                return bot;
+            }
+        }
+        // moves up and down move connected blocks only if both halves can move
+        else if (m=='^' || m=='v')
+        {
+            Dir conex = (too == '[') ? Dir{1,0} : Dir{-1,0};
+            Pos connected = next+conex;
+
+            // need to check the connecting box can move
+            bool canMoveBoth = 
+                // can move self
+                Move(map, next, m, false)!=next &&
+                Move(map, connected, m, false)!=connected;
+
+            if (canMoveBoth)
+            {
+                Move(map, connected, m);
+                Move(map, next, m);
+                
+                if (commitMove)
+                {
+                    map[bot.row][bot.col] = '.';
+                    map[next.row][next.col] = from;
+                }
+                return next;
+            }
+
+            return bot;
+        }
+    }
+
+    if (too == 'O')
     {
         // moved "next" (a wall) out the way recusivly
         if (Move(map, next, m)!=next)
         {
-            map[bot.row][bot.col] = '.';
-            map[next.row][next.col] = from;
+            if (commitMove)
+            {
+                map[bot.row][bot.col] = '.';
+                map[next.row][next.col] = from;
+            }
             return next;
         }
     }
@@ -100,6 +157,33 @@ void DebugPrint(const vector<string>& map)
     {
         cout << row << endl;
     }
+}
+
+vector<string> Widen(const vector<string>& map)
+{
+    vector<string> result;
+    result.reserve(map.size());
+
+    for (auto row : map)
+    {
+        string newrow;
+        newrow.reserve(row.size()*2);
+
+        for (auto c : row)
+        {
+            switch (c)
+            {
+                case '#': newrow += "##"; break;
+                case 'O': newrow += "[]"; break;
+                case '.': newrow += ".."; break;
+                case '@': newrow += "@."; break;                
+            }
+        }
+
+        result.push_back(newrow);
+    }
+
+    return result;
 }
 
 void Fiveteen()
@@ -123,6 +207,8 @@ void Fiveteen()
         moves += line;
     }
 
+    vector<string> map2 = Widen(map);
+
     Bot bot = FindBot(map);
 
     for (auto move : moves)
@@ -133,6 +219,21 @@ void Fiveteen()
         //DebugPrint(map);
     }
 
+    DebugPrint(map);
     cout << "P1: " << AllGPS(map) << endl;
 
+    bot = FindBot(map2);
+    DebugPrint(map2);
+
+    for (auto move : moves)
+    {
+        bot = Move(map2, bot, move);
+
+        //cout << "Move " << move << endl;
+        //DebugPrint(map2);
+    }
+
+    DebugPrint(map2);
+    cout << "P2: " << AllGPS(map2) << endl;
+    // 1543229 to low
 }
