@@ -15,6 +15,7 @@ void Ten();
 void Eleven();
 void Twelve();
 void Thirteen();
+void Fourteen();
 
 int main(int, char**)
 {
@@ -40,5 +41,10 @@ int main(int, char**)
 	//Eleven();
 
 	// Twelve();
-	Thirteen();
+
+	// p1 works, p2 probably works but takes too long to complete for me to verify
+	// Thirteen();
+
+	Fourteen();
+
 }
