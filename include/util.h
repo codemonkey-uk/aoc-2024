@@ -56,6 +56,8 @@ struct Pos
 {
     int col;
     int row;
+
+    bool operator<(const Pos& rhs)const{return col<rhs.col || (col==rhs.col && row<rhs.row);}    
     bool operator==(const Pos& p) const { return col==p.col && row==p.row; }
     bool operator!=(const Pos& p) const { return col!=p.col || row!=p.row; }
     Pos& operator+=(const Pos& p) { col+=p.col; row+=p.row; return *this; }

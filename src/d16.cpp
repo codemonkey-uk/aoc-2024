@@ -167,6 +167,8 @@ BigInt FindPath(Bot start, Pos goal, vector<string>& map, int limit=INT_MAX)
     priority_queue<Bot, std::vector<Bot>, BotCompare> q;
 
     q.push(start);
+    q.push(start.Move(map, Move('C')));
+    q.push(start.Move(map, Move('A')));    
 
     while (!q.empty() && limit--)
     {
@@ -181,14 +183,14 @@ BigInt FindPath(Bot start, Pos goal, vector<string>& map, int limit=INT_MAX)
             return bot.cost;
         }
 
-        // add all possible moves to the queue
-        for (Move m : {'T', 'C', 'A'})
+        // if able to translate
+        Bot next = bot.Move(map, Move('T'));
+        if (next!=bot)
         {
-            Bot next = bot.Move(map, m);
-            if (next != bot)
-            {
-                q.push(next);
-            }
+            q.push(next);
+            // and add rotations
+            q.push(next.Move(map, Move('C')));
+            q.push(next.Move(map, Move('A')));
         }
     }
 
