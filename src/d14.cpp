@@ -51,7 +51,7 @@ int CountBotsInBounds(const vector<Bot>& bots, int c0, int r0, int c1, int r1)
    return result;
 }
 
-void DebugPrint(const vector<Bot>& bots, 
+static void DebugPrint(const vector<Bot>& bots, 
     int c0=0, int r0=0, int c1=bounds.col, int r1=bounds.row)
 {
     for (int row=r0;row!=r1;row++)

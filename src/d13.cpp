@@ -1,4 +1,5 @@
 #include <iostream>
+#include <numeric>
 
 #include "util.h"
 
@@ -6,8 +7,8 @@ using namespace std;
 
 typedef int64_t BigInt;
 
-bool verbose=false;
-bool part2=true;
+bool verbose=true;
+bool part2=false;
 
 struct Prize
 {
@@ -28,17 +29,6 @@ struct Machine
     Prize prize;
 };
 
-BigInt GreatestCommonDivisor(BigInt a, BigInt b)
-{
-    while (b != 0)
-    {
-        BigInt t = b;
-        b = a % b;
-        a = t;
-    }
-    return a;
-}
-
 struct ExtendedEuclideanResult
 {
     BigInt gcd;
@@ -57,13 +47,38 @@ ExtendedEuclideanResult ExtendedEuclidean(BigInt a, BigInt b)
     return {r.gcd, r.y, r.x - (a / b) * r.y};
 }
 
+// Chinese Remainder Theorem
+std::pair<BigInt, BigInt> CRT(BigInt r1, BigInt m1, BigInt r2, BigInt m2)
+{
+    // Step 1: Compute GCD and coefficients
+    ExtendedEuclideanResult e = ExtendedEuclidean(m1, m2);
+    BigInt d = e.gcd;
+
+    // Step 2: Check for solvability
+    if ((r2 - r1) % d != 0)
+    {
+        throw std::runtime_error("No solution exists for the given congruences");
+    }
+
+    // Step 3: Compute the solution
+    BigInt lcm = (m1 / d) * m2; // Least common multiple of m1 and m2
+    BigInt offset = ((r2 - r1) / d) * e.x % (m2 / d);
+    BigInt x = (r1 + offset * m1) % lcm;
+
+    // Ensure x is non-negative
+    if (x < 0) x += lcm;
+
+    return {x, lcm};
+}
+
 class Solution
 {
     public:
     Solution(BigInt a_, BigInt b_, BigInt t)
-    : a(a_), b(b_)  
+    : a(a_)
+    , b(b_)
+    , r(ExtendedEuclidean(a_, b_))
     {
-        r = ExtendedEuclidean(a, b);
         if (t % r.gcd != 0)
         {
             k_min = k_max = 0;
@@ -76,7 +91,63 @@ class Solution
 
         // Calculate the range 
         k_min = std::ceil(-static_cast<double>(ma * r.gcd) / b);
-        k_max = std::floor(static_cast<double>(mb * r.gcd) / a);        
+        k_max = std::floor(static_cast<double>(mb * r.gcd) / a);
+        cout << "k_min " << k_min << " k_max " << k_max << endl;
+        assert(k_min <= k_max);
+    }
+
+    int Scale() const
+    {
+        return ma/r.x;
+    }
+    int T() const
+    {   
+        return r.gcd * Scale();
+    }
+
+    // create a combined solutiom
+    Solution(const Solution& s1, const Solution& s2)
+    : a(gcd(s1.a, s2.a))
+    , b(gcd(s1.b, s2.b))
+    , r(ExtendedEuclidean(a,b))
+    {
+        // Step 1: Calculate steps for both solutions
+        BigInt step1 = s1.b / s1.r.gcd;
+        BigInt step2 = s2.b / s2.r.gcd;
+
+        // Step 2: Align ma using modular arithmetic
+        BigInt mod1 = step1;
+        BigInt mod2 = step2;
+        BigInt res1 = (s1.ma % mod1 + mod1) % mod1; // Normalize to [0, mod1)
+        BigInt res2 = (s2.ma % mod2 + mod2) % mod2; // Normalize to [0, mod2)
+
+        // Step 3: Solve for combined k using CRT
+        auto crt = CRT(res1, mod1, res2, mod2);
+        BigInt combined_k = crt.first;   // Starting k value aligned to both solutions
+        BigInt combined_step = crt.second; // Step size of the combined solution
+
+        // Step 4: Calculate combined ma and mb
+        ma = s1.ma + combined_k * step1;
+        mb = s1.mb - combined_k * (s1.a / s1.r.gcd);
+
+        // Step 5: Align k ranges
+        // Translate s1's k range to the combined system
+        BigInt s1_k_min_aligned = (s1.k_min * step1 - combined_k) / combined_step;
+        BigInt s1_k_max_aligned = (s1.k_max * step1 - combined_k) / combined_step;
+
+        // Translate s2's k range to the combined system
+        BigInt s2_k_min_aligned = (s2.k_min * step2 - combined_k) / combined_step;
+        BigInt s2_k_max_aligned = (s2.k_max * step2 - combined_k) / combined_step;
+
+        // Compute the intersection of the ranges
+        k_min = std::max(s1_k_min_aligned, s2_k_min_aligned);
+        k_max = std::min(s1_k_max_aligned, s2_k_max_aligned);
+
+        // Step 6: Sanity check for valid range
+        if (k_min > k_max) {
+            std::cerr << "No valid solutions exist in the combined range.\n";
+            k_min = k_max = 0; // Mark as invalid
+        }
     }
 
     struct iterator 
@@ -112,10 +183,11 @@ class Solution
                 mb - i * (a / r.gcd)};
     }
 
+    const BigInt a;
+    const BigInt b;
+    const ExtendedEuclideanResult r;
+
 private:
-    BigInt a;
-    BigInt b;
-    ExtendedEuclideanResult r;
     BigInt ma;
     BigInt mb;
     BigInt k_min;
@@ -144,8 +216,10 @@ BigInt Solve(Machine m)
 
     auto xsolutions = Solve(m.a.dx, m.b.dx, m.prize.x);
     auto ysolutions = Solve(m.a.dy, m.b.dy, m.prize.y);
+    auto combo = Solution(xsolutions, ysolutions);
 
-    cout << xsolutions.size() << " solutions for x: " << endl;
+    cout << xsolutions.size() << " solutions for x with gcd = ";
+    cout << xsolutions.r.gcd << "*" << xsolutions.Scale() << endl;
     if (verbose && !part2)
     {
         for (auto x: xsolutions)
@@ -157,7 +231,8 @@ BigInt Solve(Machine m)
         }
     }
     
-    cout << ysolutions.size() << " solutions for y: " << endl;
+    cout << ysolutions.size() << " solutions for y with gcd = ";
+    cout << ysolutions.r.gcd << "*" << ysolutions.Scale() << endl;
     if (verbose && !part2)
     {
         for (auto y: ysolutions)
@@ -168,7 +243,27 @@ BigInt Solve(Machine m)
             cout << " = " << m.prize.y << endl;
         }
     }
-    
+
+    cout << combo.size() << " shared solutions: with gcd = ";
+    cout << combo.r.gcd << "*" << combo.Scale() << endl;
+    if (verbose && !part2)
+    {
+        int max = 5;
+        for (auto c: combo)
+        {
+            cout << " " << c.first << " x " << m.a.dx << " + ";
+            cout << " " << c.second << " x " << m.b.dx << " = ";
+            cout << " " << c.first * m.a.dx + c.second * m.b.dx;
+            cout << " = " << m.prize.x << endl;
+
+            cout << " " << c.first << " x " << m.a.dy << " + ";
+            cout << " " << c.second << " x " << m.b.dy << " = ";
+            cout << " " << c.first * m.a.dy + c.second * m.b.dy;
+            cout << " = " << m.prize.y << endl;
+            if (max-- == 0) { cout << "..." << endl; break; }
+        }
+    }
+
     if (xsolutions.size() && ysolutions.size())
     {
         if (verbose) cout << "looking for " << (*ysolutions.begin()).first << " " << (*ysolutions.begin()).second << " in xsolutions" << endl;

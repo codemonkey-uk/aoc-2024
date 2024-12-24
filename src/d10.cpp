@@ -10,7 +10,7 @@ using namespace std;
 typedef Grid<int> Topo;
 typedef Grid<int> Visited;
 
-void DebugPrint(const Topo& map)
+static void DebugPrint(const Topo& map)
 {
     for (int row=0;row!=map.height;row++)
     {
@@ -24,12 +24,6 @@ void DebugPrint(const Topo& map)
     }
     cout << endl;
 }
-
-struct Pos 
-{
-    int col; int row;
-    bool operator<(const Pos& rhs)const{return col<rhs.col || (col==rhs.col && row<rhs.row);}
-};
 
 vector<Pos> FindTrailHeads(const Topo& map)
 {

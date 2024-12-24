@@ -151,7 +151,7 @@ Bot Move(vector<string>& map, const Bot& bot, char m, bool commitMove=true)
     return bot;
 }
 
-void DebugPrint(const vector<string>& map)
+static void DebugPrint(const vector<string>& map)
 {
     for (auto row : map)
     {

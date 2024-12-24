@@ -15,7 +15,7 @@ size_t Measure(const string& d)
     return total;
 }
 
-void DebugPrint(const vector<int>& content)
+static void DebugPrint(const vector<int>& content)
 {
     for (int i : content)
         if (i==-1) cout << ".";

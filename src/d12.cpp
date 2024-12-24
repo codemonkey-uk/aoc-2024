@@ -12,12 +12,6 @@ typedef uint64_t BigInt;
 typedef Grid<char> Garden;
 typedef Grid<int> Regions;
 
-struct Pos
-{
-    int col;
-    int row;
-};
-
 enum Direction {NORTH, EAST, SOUTH, WEST};
 Pos Offset[] = {{0,-1},{1,0},{0,1},{-1,0}};
 
@@ -30,7 +24,7 @@ struct Span
     Direction dir;
 };
 
-void DebugPrintRegions(const Regions& regions)
+static void DebugPrintRegions(const Regions& regions)
 {
     for (int row=0;row!=regions.height;row++)
     {
