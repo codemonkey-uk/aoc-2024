@@ -61,6 +61,7 @@ struct Pos
     bool operator==(const Pos& p) const { return col==p.col && row==p.row; }
     bool operator!=(const Pos& p) const { return col!=p.col || row!=p.row; }
     Pos& operator+=(const Pos& p) { col+=p.col; row+=p.row; return *this; }
+    Pos& operator-=(const Pos& p) { col-=p.col; row-=p.row; return *this; }
     Pos operator+(const Pos& p) const { return {col+p.col,row+p.row}; }
 };
 
@@ -74,6 +75,9 @@ class Grid
         data.resize(w*h);
     }
 
+    Grid() = default;
+    Grid(const Grid& g) = default;
+
     const T& get(int x, int y) const {
         return data[x+y*width];
     }
@@ -82,7 +86,7 @@ class Grid
         return data[x+y*width];
     }
     
-    void fill(T c) { for(T& d:data)c=d; }
+    void fill(T c) { for(T& d:data)d=c; }
   
     int width=0;
     int height=0;

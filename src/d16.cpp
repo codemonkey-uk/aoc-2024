@@ -1,9 +1,13 @@
 #include <iostream>
 #include <queue>
-
+#include <set>
+#include <map>
 #include "util.h"
 
+const bool veryVerbose=false;
+
 using namespace std;
+
 typedef int64_t BigInt;
 typedef Pos Dir;
 
@@ -30,6 +34,22 @@ Pos FindStart(const vector<string>& map)
 Pos FindEnd(const vector<string>& map)
 {
     return Find('E', map);
+}
+
+int Count(char c, const vector<string>& map)
+{
+    int result=0;
+    for (uint row=0;row!=map.size();row++)
+    {
+        for (uint col=0;col!=map[row].size();col++)
+        {
+            if (map[row][col] == c)
+            {
+                result++;
+            }
+        }
+    }
+    return result;
 }
 
 constexpr Dir Direction(char c)
@@ -89,10 +109,16 @@ struct Bot
     Pos p;
     char c;
 
+    static set<Bot> history;
+    typedef set<Bot>::iterator iterator;
+    iterator previous = history.end();
+    
+    
     Dir Direction() const { return ::Direction(c); }
     Bot Rotate(char m) const
     {
         Bot result(*this);
+        result.previous = history.insert(*this).first;
         result.c = m == 'C' ? RotateClockwise(c) : RotateAnitClockwise(c);
         result.cost += 1000;
         return result;
@@ -100,23 +126,43 @@ struct Bot
     Bot Translate(Dir d) const
     {
         Bot result(*this);
+        result.previous = history.insert(*this).first;
         result.p += d;
         result.cost += 1;
         return result;
     }
 
-    bool operator==(const Bot& b) const { return p == b.p && c == b.c; }
-    bool operator!=(const Bot& b) { return !(*this==b); }
+    bool HistoryLess(const Bot& b) const
+    {
+        // same history, they are the same node
+        if (previous == b.previous) return false;
 
-    Bot Move(vector<string>& map, Move m, bool commitMove=true) const
+        // if no history, then this is less than b
+        if (previous == history.end()) return true;
+
+        //  compare previous nodes 
+        return *previous < *b.previous;
+    }
+    // for set
+    bool operator<(const Bot& b) const 
+    {
+        return p< b.p || 
+              (p==b.p && c < b.c) || 
+              (p==b.p && c==b.c && HistoryLess(b));
+    }
+
+    bool operator==(const Bot& b) const { return p == b.p && c == b.c; }
+    bool operator!=(const Bot& b) const { return !(*this==b); }
+
+    Bot Move(const vector<string>& map, Move m) const
     {
         // you can always rotate
         if (m.IsRotate())
         {   
-            if (commitMove)
-            {
-                map[p.row][p.col] = c;
-            }
+            //if (commitMove)
+            //{
+            //    map[p.row][p.col] = c;
+            //}
             return Rotate(m.m);
         }
 
@@ -136,10 +182,10 @@ struct Bot
         // can only enter empty spaces
         if (too == '.' || too == 'E')
         {
-            if (commitMove)
-            {
-                map[next.p.row][next.p.col] = c;
-            }
+            //if (commitMove)
+            //{
+            //    map[next.p.row][next.p.col] = c;
+            //}
             return next;
         }
 
@@ -148,6 +194,9 @@ struct Bot
     }
 };
 
+//static
+set<Bot> Bot::history;
+
 static void DebugPrint(const vector<string>& map)
 {
     for (auto row : map)
@@ -155,47 +204,126 @@ static void DebugPrint(const vector<string>& map)
         cout << row << endl;
     }
 }
+static void DebugPrint(Bot bot, Pos start, vector<string> debugMap)
+{
+    cout << "bot " << bot.p.col << "," << bot.p.row << " " << bot.c << " " << bot.cost << endl;
+    while(bot.p != start)
+    {
+        debugMap[bot.p.row][bot.p.col] = bot.c;
+        //bot.p -= ::Direction(map[bot.p.row][bot.p.col]);
+        bot = *bot.previous;              
+    }
+    DebugPrint(debugMap);
+}
 
-struct BotCompare
+struct BotCostCompare
 {
     bool operator()(Bot l, Bot r) const { return l.cost > r.cost; }
 };
 
-BigInt FindPath(Bot start, Pos goal, vector<string>& map, int limit=INT_MAX)
+BigInt FindPath(Bot start, Pos goal, vector<string>& mapInOut, int limit=INT_MAX)
 {
+    // the working map will contain incomplete routes
+    const vector<string> map = mapInOut;
+
+    BigInt cost_limit = numeric_limits<BigInt>::max();
+
+    std::map<char, Grid<BigInt> > costs;
+    costs['>'] = Grid<BigInt>(map[0].size(), map.size());
+    costs['>'].fill(cost_limit);
+    costs['v'] = Grid<BigInt>(map[0].size(), map.size());
+    costs['v'].fill(cost_limit);
+    costs['<'] = Grid<BigInt>(map[0].size(), map.size());
+    costs['<'].fill(cost_limit);
+    costs['^'] = Grid<BigInt>(map[0].size(), map.size());
+    costs['^'].fill(cost_limit);
+
     // priorty queue of bots ordered by cost
-    priority_queue<Bot, std::vector<Bot>, BotCompare> q;
+    priority_queue<Bot, std::vector<Bot>, BotCostCompare> q;
 
     q.push(start);
     q.push(start.Move(map, Move('C')));
     q.push(start.Move(map, Move('A')));    
 
+    const int initialLimit = limit;
+
     while (!q.empty() && limit--)
     {
-        //DebugPrint(map);
-
-        Bot bot = q.top();
+        const Bot bot = q.top();
         q.pop();
 
-        // if we reached the goal, return the cost
-        if (bot.p == goal)
+        if (veryVerbose) 
         {
-            return bot.cost;
+            DebugPrint(bot, start.p, map);
         }
 
-        // if able to translate
+        if (bot.cost > costs[bot.c].get(bot.p.col, bot.p.row)) continue;
+        costs[bot.c].get(bot.p.col, bot.p.row) = bot.cost;
+
+        if (bot.cost > cost_limit) break;
+
+        // if we reached the goal, save the cost
+        if (bot.p == goal)
+        {
+            cost_limit = bot.cost;
+            // copy the route the bot took into the map but walking it back
+            Bot b=bot;
+            while(b.p != start.p)
+            {
+                mapInOut[b.p.row][b.p.col] = 'O';
+                b = *b.previous;
+            }
+            cout << "Found path with cost " << bot.cost << endl;
+            DebugPrint(mapInOut);
+            continue;
+        }
+
         Bot next = bot.Move(map, Move('T'));
         if (next!=bot)
         {
-            q.push(next);
-            // and add rotations
-            q.push(next.Move(map, Move('C')));
-            q.push(next.Move(map, Move('A')));
+            if (veryVerbose) 
+                cout << "-> " << next.p.col << "," << next.p.row << " " << next.c << " " << next.cost << endl;
+            
+            // allow for bots to be rotated  before or after arrivals
+            BigInt cost = costs[next.c].get(next.p.col, next.p.row);
+            if (next.cost <= cost)
+            {
+                q.push(next);
+                
+                // and add rotations
+                Bot next_c = next.Move(map, Move('C'));
+                if (next_c.cost < costs[next_c.c].get(next_c.p.col, next_c.p.row))
+                {
+                    q.push(next_c);
+                    costs[next.c].get(next.p.col, next.p.row) = next.cost;
+                }
+                Bot next_a = next.Move(map, Move('A'));
+                if (next_a.cost < costs[next_a.c].get(next_a.p.col, next_a.p.row))
+                {
+                    q.push(next_a);
+                    costs[next.c].get(next_a.p.col, next_a.p.row) = next.cost;
+                }
+            }
+            else if (veryVerbose)
+            {
+                cout << "skip " << next.p.col << "," << next.p.row << ": " 
+                    << next.cost << " > " <<  costs[next.c].get(next.p.col, next.p.row) << endl;
+            }
         }
+        else  if (veryVerbose)
+            {
+                cout << "blocked " << next.p.col << "," << next.p.row << ";" << endl;
+            }
+    }
+
+    if (cost_limit == numeric_limits<BigInt>::max())
+    {
+        cerr << "Failed after " << initialLimit-limit << " iterations, with " 
+            << q.size() << " pending nodes." << endl;
     }
 
     // no path found
-    return -1;
+    return cost_limit;
 };
 
 void Sixteen()
@@ -222,4 +350,5 @@ void Sixteen()
     DebugPrint(map);
 
     cout << "P1: " << result << endl;
+    cout << "P2: " << Count('O',map)+1 << endl;
 }
