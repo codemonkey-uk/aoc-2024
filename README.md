@@ -20,3 +20,9 @@ If you have any questions, please feel free to get in touch.
 
 https://mastodon.gamedev.place/@codemonkey_uk
 
+## aoc-2021
+
+Solutions here: https://github.com/codemonkey-uk/aoc-2021
+
+Can also be found in this depot using git tag aoc-2024 or
+https://github.com/codemonkey-uk/aoc-2024/tree/aoc2021
