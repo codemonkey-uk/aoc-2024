@@ -19,6 +19,8 @@ void Fourteen();
 void Fiveteen();
 void Sixteen();
 
+void TwentyFiveChristmasDay();
+
 int main(int, char**)
 {
 	// One();
@@ -53,5 +55,7 @@ int main(int, char**)
 	// p1 works, p2 works on example but gives the wrong answer for puzzle input :(
 	// Fiveteen();
 
-	Sixteen();
+	// Sixteen();
+
+	TwentyFiveChristmasDay();
 }
